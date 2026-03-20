@@ -1,0 +1,195 @@
+/* 参考 book-library 全局样式 */
+body {
+  margin: 0;
+  font-family: "微软雅黑", "PingFang SC", "Arial", "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.el-container {
+  height: 100vh;
+}
+
+.el-header,
+.el-aside {
+  background-color: #344a5f;
+  color: white;
+}
+
+.el-header {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 70px;
+  min-height: 70px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.el-header h1 {
+  margin: 0 auto;
+  font-size: 20px;
+}
+
+.el-aside {
+  width: 200px;
+  min-width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease, min-width 0.3s ease;
+  overflow: hidden;
+}
+
+.el-aside.collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+
+.el-main {
+  background-color: #f5f7fa;
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.el-footer {
+  background-color: #e9ecef;
+  text-align: center;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin: 0 10px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.sidebar-header {
+  padding: 20px;
+  text-align: center;
+}
+
+.sidebar-header img {
+  width: 60px;
+  height: 60px;
+}
+
+.el-menu {
+  flex: 1;
+  border-right: none;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.role {
+  margin-right: 10px;
+}
+
+.username {
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.separator {
+  margin: 0 10px;
+  color: white;
+}
+
+/* 工作台样式 */
+.dashboard-page {
+  padding: 28px 28px 18px 28px;
+}
+
+.dashboard-welcome {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.avatar-admin {
+  background: linear-gradient(130deg, #5c9afb, #13d3b4);
+  color: #fff;
+}
+
+.welcome-title {
+  color: #226fae;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.welcome-role {
+  color: #8ab3ea;
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.dashboard-row {
+  margin-bottom: 18px;
+}
+
+.stat-card {
+  border-radius: 15px;
+  padding: 18px 14px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 98px;
+  margin-bottom: 0;
+  box-shadow: 0 2px 10px rgba(170, 204, 249, 0.1);
+  border: none;
+}
+
+.stat-blue { background: linear-gradient(110deg, #ecf3fa, #e0f3fa); }
+.stat-green { background: linear-gradient(110deg, #e7faee, #eafaf9); }
+.stat-orange { background: linear-gradient(110deg, #fdf6e4, #eceefc); }
+.stat-red { background: linear-gradient(110deg, #ffecec, #f8edeb); }
+.stat-purple { background: linear-gradient(110deg, #eae8f7, #e2edfa); }
+
+.stat-num { color: #217edf; font-size: 28px; font-weight: bold; }
+.stat-card .stat-icon { font-size: 27px; margin-bottom: 3px; color: #217edf; }
+.stat-desc { font-size: 14px; color: #555; margin-top: 4px; }
+
+.quick-row .quick-card {
+  border-radius: 12px;
+  background: #f6f9fc;
+  cursor: pointer;
+  text-align: center;
+  color: #217edf;
+  font-weight: bold;
+  padding: 22px 4px 12px;
+  border: none;
+  transition: background 0.3s, box-shadow 0.2s;
+}
+
+.quick-row .quick-card:hover {
+  background: #e3f2fd;
+  box-shadow: 0 2px 12px rgba(186, 208, 239, 0.1);
+}
+
+.quick-icon { font-size: 23px; margin-bottom: 8px; }
+.quick-title { font-size: 15px; }
+
+.activity-card {
+  margin-top: 22px;
+  border-radius: 12px;
+  background: #f7fafb;
+  border: none;
+  min-height: 174px;
+  box-shadow: 0 2px 8px rgba(188, 220, 247, 0.3);
+}
+
+.activity-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #217edf;
+  margin-bottom: 10px;
+}
