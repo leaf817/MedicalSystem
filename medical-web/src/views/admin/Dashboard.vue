@@ -107,7 +107,7 @@ const quickEntries = [
 ]
 
 const activities = ref([
-  { time: '2025-03-19 10:00', content: '系统初始化完成，欢迎使用', type: 'primary' }
+  { time: '2026-03-19 10:00', content: '系统初始化完成，欢迎使用', type: 'primary' }
 ])
 
 const goto = (path) => {
@@ -117,15 +117,25 @@ const goto = (path) => {
 
 <style scoped>
 .stat-icon {
-  color: #217edf;
+  color: #8b5a2b;
 }
 .stat-green .stat-icon {
-  color: #20bf6b;
+  color: #5c7c4a;
 }
 .stat-orange .stat-icon {
-  color: #fa981e;
+  color: #d48232;
 }
 .stat-red .stat-icon {
-  color: #f56c6c;
+  color: #b85c4a;
+}
+
+.activity-card :deep(.el-timeline-item__content) {
+  color: #3d2914;
+}
+.activity-card :deep(.el-timeline-item__timestamp) {
+  color: #5c4a32;
+}
+.quick-icon {
+  color: #8b5a2b;
 }
 </style>

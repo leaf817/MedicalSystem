@@ -1,4 +1,5 @@
 <template>
+  <div class="layout-bg"></div>
   <el-container class="layout-container" direction="horizontal">
     <app-sidebar :sidebar-collapsed="sidebarCollapsed" />
     <el-container class="main-wrapper" direction="vertical">
@@ -14,7 +15,19 @@
 </template>
 
 <style scoped>
+.layout-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/images/login%20background.jpg') center center / cover no-repeat;
+  z-index: 0;
+}
+
 .layout-container {
+  position: relative;
+  z-index: 1;
   height: 100vh;
   overflow: hidden;
   display: flex;

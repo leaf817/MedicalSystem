@@ -9,9 +9,10 @@
       :collapse="sidebarCollapsed"
       router
       class="el-menu-vertical-demo"
-      background-color="#344a5f"
-      text-color="#fff"
+      background-color="transparent"
+      text-color="rgba(255,255,255,0.9)"
       active-text-color="#ffd04b"
+      popper-class="sidebar-menu-popup"
     >
       <template v-for="item in menuItems" :key="item.index">
         <el-sub-menu v-if="item.children?.length" :index="item.index">
@@ -39,6 +40,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { getMenuByRole } from '@/config/menu-config'
 
 const props = defineProps({
@@ -55,15 +57,28 @@ const userInfo = computed(() => {
 
 const menuItems = computed(() => getMenuByRole(userInfo.value?.roles))
 
-const defaultOpeneds = computed(() => menuItems.value.map((item) => item.index))
+// 只展开包含当前路由的子菜单，减少 DOM 和动画负担，缓解顿挫
+const route = useRoute()
+const defaultOpeneds = computed(() => {
+  const path = route.path
+  const item = menuItems.value.find((m) => m.children?.some((c) => path.startsWith(c.url)))
+  return item ? [item.index] : []
+})
 </script>
 
 <style scoped>
 .sidebar-header {
-  padding: 20px;
-  text-align: center;
+  height: 70px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .sidebar-header i {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
 }
 </style>

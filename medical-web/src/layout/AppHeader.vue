@@ -62,17 +62,18 @@ const handleLogout = async () => {
 
 <style scoped>
 .toggle-btn {
-  background-color: #344a5f;
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   margin-right: 10px;
 }
 .toggle-btn:hover {
-  background-color: #3d566e;
+  background: rgba(255, 255, 255, 0.25);
   color: white;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 .avatar {
-  background: linear-gradient(130deg, #5c9afb, #13d3b4);
+  background: linear-gradient(135deg, #e8a54b, #d48232);
   color: #fff;
 }
 .logout-btn {

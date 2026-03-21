@@ -4,14 +4,52 @@ body {
   font-family: "微软雅黑", "PingFang SC", "Arial", "Helvetica Neue", Helvetica, sans-serif;
 }
 
+/* 侧边栏收起时，子菜单弹出层使用深色主题（避免白底白字不可见） */
+.sidebar-menu-popup {
+  background: rgba(61, 41, 20, 0.98) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  padding: 4px 0 !important;
+}
+.sidebar-menu-popup .el-menu {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.sidebar-menu-popup .el-menu-item {
+  color: rgba(255, 255, 255, 0.9) !important;
+  height: 40px;
+  line-height: 40px;
+}
+.sidebar-menu-popup .el-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+.sidebar-menu-popup .el-menu-item.is-active {
+  background: rgba(232, 165, 75, 0.25) !important;
+  color: #ffd04b !important;
+}
+
 .el-container {
   height: 100vh;
 }
 
-.el-header,
-.el-aside {
-  background-color: #344a5f;
+.el-header {
+  background: rgba(61, 41, 20, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: white;
+  border-color: rgba(139, 90, 43, 0.3);
+}
+
+/* 侧边栏使用更高不透明度+轻量模糊，减少展开菜单时的 blur 重算卡顿 */
+.el-aside {
+  background: rgba(61, 41, 20, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: white;
+  border-color: rgba(139, 90, 43, 0.3);
+  transform: translateZ(0); /* GPU 加速，减少重绘范围 */
 }
 
 .el-header {
@@ -20,13 +58,17 @@ body {
   padding: 0 20px;
   height: 70px;
   min-height: 70px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   flex-shrink: 0;
 }
 
 .el-header h1 {
   margin: 0 auto;
   font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .el-aside {
@@ -37,6 +79,7 @@ body {
   flex-direction: column;
   transition: width 0.3s ease, min-width 0.3s ease;
   overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .el-aside.collapsed {
@@ -45,17 +88,23 @@ body {
 }
 
 .el-main {
-  background-color: #f5f7fa;
+  background: rgba(255, 252, 245, 0.25);
+  backdrop-filter: blur(8px);
   padding: 20px;
   overflow-y: auto;
   flex: 1;
 }
 
 .el-footer {
-  background-color: #e9ecef;
+  background: rgba(61, 41, 20, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.9);
   text-align: center;
   padding: 10px;
   flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .avatar {
@@ -68,8 +117,13 @@ body {
 }
 
 .sidebar-header {
-  padding: 20px;
-  text-align: center;
+  height: 70px;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-header img {
@@ -80,6 +134,51 @@ body {
 .el-menu {
   flex: 1;
   border-right: none;
+  background-color: transparent !important;
+  padding: 8px 0;
+}
+
+/* 子菜单 ul：消除默认 margin，用 padding 控制间距，避免展开完成后高度突变 */
+.el-sub-menu .el-menu--inline {
+  margin: 0;
+  padding: 4px 0;
+  box-sizing: border-box;
+}
+
+.el-menu-item,
+.el-sub-menu__title {
+  height: 48px;
+  line-height: 48px;
+  margin: 2px 8px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* 子菜单项取消上下 margin，由父级 padding 控制，避免 scrollHeight 与最终高度不一致 */
+.el-sub-menu .el-menu-item {
+  margin: 0 8px;
+}
+
+.el-menu-item:hover,
+.el-sub-menu__title:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.el-menu-item.is-active {
+  background-color: rgba(232, 165, 75, 0.25) !important;
+  color: #ffd04b !important;
+}
+
+.el-menu .el-icon {
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+/* 缩短子菜单展开/收起动画，减少顿挫感 */
+.el-menu .el-collapse-transition-enter-active,
+.el-menu .el-collapse-transition-leave-active {
+  transition-duration: 0.15s !important;
+  transition-timing-function: ease-out !important;
 }
 
 .header-right {
@@ -89,11 +188,15 @@ body {
 
 .role {
   margin-right: 10px;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .username {
   margin-right: 10px;
   cursor: pointer;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .separator {
@@ -116,18 +219,19 @@ body {
 }
 
 .avatar-admin {
-  background: linear-gradient(130deg, #5c9afb, #13d3b4);
+  background: linear-gradient(135deg, #e8a54b, #d48232);
   color: #fff;
 }
 
 .welcome-title {
-  color: #226fae;
+  color: #2c1810;
   font-size: 22px;
   font-weight: bold;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .welcome-role {
-  color: #8ab3ea;
+  color: #5c4a32;
   font-size: 14px;
   margin-top: 2px;
 }
@@ -136,43 +240,54 @@ body {
   margin-bottom: 18px;
 }
 
+.dashboard-row .el-col {
+  margin-bottom: 0;
+}
+
 .stat-card {
-  border-radius: 15px;
+  border-radius: 16px;
   padding: 18px 14px 14px 18px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   min-height: 98px;
   margin-bottom: 0;
-  box-shadow: 0 2px 10px rgba(170, 204, 249, 0.1);
-  border: none;
+  background: rgba(255, 252, 250, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px rgba(61, 41, 20, 0.12);
 }
 
-.stat-blue { background: linear-gradient(110deg, #ecf3fa, #e0f3fa); }
-.stat-green { background: linear-gradient(110deg, #e7faee, #eafaf9); }
-.stat-orange { background: linear-gradient(110deg, #fdf6e4, #eceefc); }
-.stat-red { background: linear-gradient(110deg, #ffecec, #f8edeb); }
-.stat-purple { background: linear-gradient(110deg, #eae8f7, #e2edfa); }
+.stat-blue { background: rgba(236, 248, 255, 0.6) !important; }
+.stat-green { background: rgba(232, 252, 238, 0.6) !important; }
+.stat-orange { background: rgba(255, 250, 235, 0.6) !important; }
+.stat-red { background: rgba(255, 242, 240, 0.6) !important; }
+.stat-purple { background: rgba(245, 240, 255, 0.6) !important; }
 
-.stat-num { color: #217edf; font-size: 28px; font-weight: bold; }
-.stat-card .stat-icon { font-size: 27px; margin-bottom: 3px; color: #217edf; }
-.stat-desc { font-size: 14px; color: #555; margin-top: 4px; }
+.stat-num { color: #2c1810; font-size: 28px; font-weight: bold; }
+.stat-card .stat-icon { font-size: 27px; margin-bottom: 3px; }
+.stat-desc { font-size: 14px; color: #4a3520; margin-top: 4px; font-weight: 500; }
 
 .quick-row .quick-card {
-  border-radius: 12px;
-  background: #f6f9fc;
+  border-radius: 14px;
+  background: rgba(255, 252, 250, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   cursor: pointer;
   text-align: center;
-  color: #217edf;
+  color: #8b5a2b;
   font-weight: bold;
   padding: 22px 4px 12px;
-  border: none;
-  transition: background 0.3s, box-shadow 0.2s;
+  box-shadow: 0 4px 16px rgba(61, 41, 20, 0.1);
+  transition: all 0.3s;
 }
 
 .quick-row .quick-card:hover {
-  background: #e3f2fd;
-  box-shadow: 0 2px 12px rgba(186, 208, 239, 0.1);
+  background: rgba(255, 250, 240, 0.7);
+  box-shadow: 0 6px 24px rgba(212, 130, 50, 0.2);
+  border-color: rgba(232, 165, 75, 0.4);
+  color: #d48232;
 }
 
 .quick-icon { font-size: 23px; margin-bottom: 8px; }
@@ -180,16 +295,18 @@ body {
 
 .activity-card {
   margin-top: 22px;
-  border-radius: 12px;
-  background: #f7fafb;
-  border: none;
+  border-radius: 16px;
+  background: rgba(255, 252, 250, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   min-height: 174px;
-  box-shadow: 0 2px 8px rgba(188, 220, 247, 0.3);
+  box-shadow: 0 4px 24px rgba(61, 41, 20, 0.1);
 }
 
 .activity-title {
   font-size: 16px;
   font-weight: 700;
-  color: #217edf;
+  color: #8b5a2b;
   margin-bottom: 10px;
 }
