@@ -1,18 +1,22 @@
 <template>
   <div class="login-page">
-    <!-- 顶部 logo 及标题 -->
-    <div class="login-header">
-      <div>
-        <div class="login-title-zh">智能医疗服务管理系统</div>
-        <div class="login-title-sub">Smart Medical Service System</div>
+    <!-- 背景图 -->
+    <div class="login-bg"></div>
+    <!-- 主内容区 -->
+    <div class="login-content">
+      <!-- 顶部 logo 及标题 -->
+      <div class="login-header">
+        <div>
+          <div class="login-title-zh">智能医疗服务管理系统</div>
+          <div class="login-title-sub">Smart Medical Service System</div>
+        </div>
       </div>
-    </div>
-    <!-- 登录主卡片 -->
-    <el-card class="login-card" shadow="never">
-      <div class="login-tabs">
-        <div class="tab active">账户密码登录</div>
-      </div>
-      <el-form
+      <!-- 登录主卡片 -->
+      <el-card class="login-card" shadow="never">
+        <div class="login-tabs">
+          <div class="tab active">账户密码登录</div>
+        </div>
+        <el-form
         ref="formRef"
         :model="form"
         :rules="rules"
@@ -58,10 +62,11 @@
             登&nbsp;&nbsp;录
           </el-button>
         </el-form-item>
-      </el-form>
-    </el-card>
-    <!-- 页脚 -->
-    <div class="login-footer">Copyright © 智能医疗服务管理系统 2025</div>
+        </el-form>
+      </el-card>
+      <!-- 页脚 -->
+      <div class="login-footer">Copyright © 智能医疗服务管理系统 2026</div>
+    </div>
   </div>
 </template>
 
@@ -104,14 +109,37 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* 参考 book-library login.css */
+/* 与背景图风格统一：温暖日落、传统与现代医疗融合 */
 .login-page {
   min-height: 100vh;
-  background: #f7f8fa;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  overflow: hidden;
+}
+
+/* 全屏背景图 */
+.login-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/images/login%20background.jpg') center center / cover no-repeat;
+  z-index: 0;
+}
+
+/* 主内容层，置于背景之上 */
+.login-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 28px;
 }
 
 .login-header {
@@ -122,26 +150,49 @@ const handleLogin = async () => {
   user-select: none;
 }
 
+/* 标题：白色加粗描边，保证在深色背景上清晰可见 */
 .login-title-zh {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
-  color: #2469b8;
+  color: #fff;
   line-height: 32px;
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.9),
+    0 0 8px rgba(0, 0, 0, 0.7),
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .login-title-sub {
   font-size: 18px;
-  color: #222;
-  font-family: "KaiTi", cursive;
+  color: #fff;
+  font-family: "KaiTi", "楷体", cursive;
   margin-top: 2px;
+  text-shadow:
+    0 0 3px rgba(0, 0, 0, 0.9),
+    0 0 6px rgba(0, 0, 0, 0.6),
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
+/* 毛玻璃透明卡片 */
 .login-card {
   width: 400px;
   margin-top: 12px;
-  border-radius: 12px;
-  box-shadow: none;
-  border: 1.5px solid #e8eef2;
+  border-radius: 16px;
+  background: rgba(255, 252, 250, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.login-card :deep(.el-card__body) {
+  padding: 28px 32px;
 }
 
 .login-tabs {
@@ -156,7 +207,8 @@ const handleLogin = async () => {
   font-size: 17px;
   font-weight: bold;
   line-height: 38px;
-  color: #19c4b3;
+  color: #2c1810;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
 .login-form {
@@ -167,32 +219,70 @@ const handleLogin = async () => {
   margin-bottom: 22px;
 }
 
+/* 输入框：半透明毛玻璃，保证可读 */
 .login-form :deep(.el-input__wrapper) {
-  border-radius: 7px !important;
-  background: #fff !important;
-  border: 1px solid #c2e1e9 !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(100, 70, 40, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.login-form :deep(.el-input__wrapper:hover),
+.login-form :deep(.el-input__wrapper.is-focus) {
+  border-color: rgba(210, 130, 50, 0.7) !important;
+  box-shadow: 0 0 0 2px rgba(210, 130, 50, 0.15);
+}
+
+.login-form :deep(.el-input__inner) {
+  color: #1a0f08;
+  font-weight: 500;
+}
+
+.login-form :deep(.el-input__inner::placeholder) {
+  color: #4a3520;
+  font-weight: 500;
+}
+
+.login-form :deep(.el-icon) {
+  color: #3d2914;
+}
+
+/* 落日暖橙登录按钮，白色文字加描边 */
 .login-btn {
   width: 100%;
   font-size: 18px;
   font-weight: bold;
-  background: #19c4b3;
+  background: linear-gradient(135deg, #e8a54b 0%, #d48232 100%);
   border: none;
-  border-radius: 7px;
+  border-radius: 10px;
   letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 16px rgba(212, 130, 50, 0.4);
 }
 
 .login-btn:hover,
 .login-btn:focus {
-  filter: brightness(96%);
+  background: linear-gradient(135deg, #f0b55c 0%, #e08d3a 100%);
+  box-shadow: 0 6px 20px rgba(212, 130, 50, 0.5);
 }
 
 .login-footer {
   text-align: center;
-  color: #b6bdc5;
+  color: #fff;
   font-size: 13px;
+  font-weight: 500;
   margin: 35px 0 0 0;
+  padding: 8px 16px;
   user-select: none;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  text-shadow:
+    0 0 2px rgba(0, 0, 0, 0.9),
+    1px 1px 0 #000,
+    -1px -1px 0 #000,
+    0 1px 2px rgba(0, 0, 0, 0.8);
 }
 </style>
