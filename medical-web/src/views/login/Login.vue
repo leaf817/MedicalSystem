@@ -14,54 +14,160 @@
       <!-- 登录主卡片 -->
       <el-card class="login-card" shadow="never">
         <div class="login-tabs">
-          <div class="tab active">账户密码登录</div>
+          <div
+            class="tab"
+            :class="{ active: activeTab === 'login' }"
+            @click="activeTab = 'login'"
+          >
+            账户密码登录
+          </div>
+          <div
+            class="tab"
+            :class="{ active: activeTab === 'register' }"
+            @click="activeTab = 'register'"
+          >
+            新用户注册
+          </div>
         </div>
         <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        class="login-form"
-        autocomplete="off"
-        @keydown.enter.prevent="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="请输入账户名/工号"
-            size="large"
-            clearable
-            autocomplete="off"
-          >
-            <template #prefix>
-              <el-icon><User /></el-icon>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item prop="password">
-          <el-input
-            v-model="form.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            show-password
-            autocomplete="new-password"
-          >
-            <template #prefix>
-              <el-icon><Lock /></el-icon>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item style="margin-top: 26px">
-          <el-button
-            type="primary"
-            class="login-btn"
-            size="large"
-            :loading="loading"
-            @click="handleLogin"
-          >
-            登&nbsp;&nbsp;录
-          </el-button>
-        </el-form-item>
+          v-show="activeTab === 'login'"
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          class="login-form"
+          autocomplete="off"
+          @keydown.enter.prevent="handleLogin"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入账户名/工号"
+              size="large"
+              clearable
+              autocomplete="off"
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="form.password"
+              type="password"
+              placeholder="请输入密码"
+              size="large"
+              show-password
+              autocomplete="current-password"
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item style="margin-top: 26px">
+            <el-button
+              type="primary"
+              class="login-btn"
+              size="large"
+              :loading="loading"
+              @click="handleLogin"
+            >
+              登&nbsp;&nbsp;录
+            </el-button>
+          </el-form-item>
+        </el-form>
+        <el-form
+          v-show="activeTab === 'register'"
+          ref="registerFormRef"
+          :model="registerForm"
+          :rules="registerRules"
+          class="login-form"
+          autocomplete="off"
+          @keydown.enter.prevent="handleRegister"
+        >
+          <el-form-item prop="username">
+            <el-input
+              v-model="registerForm.username"
+              placeholder="用户名（3～32 个字符）"
+              size="large"
+              clearable
+              maxlength="32"
+              autocomplete="off"
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="name">
+            <el-input
+              v-model="registerForm.name"
+              placeholder="姓名（可选，默认与用户名相同）"
+              size="large"
+              clearable
+              maxlength="50"
+              autocomplete="off"
+            >
+              <template #prefix>
+                <el-icon><UserFilled /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="mobilePhone">
+            <el-input
+              v-model="registerForm.mobilePhone"
+              placeholder="手机号（可选）"
+              size="large"
+              clearable
+              maxlength="11"
+              autocomplete="off"
+            >
+              <template #prefix>
+                <el-icon><Iphone /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="registerForm.password"
+              type="password"
+              placeholder="密码（至少 6 位）"
+              size="large"
+              show-password
+              autocomplete="new-password"
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="confirmPassword">
+            <el-input
+              v-model="registerForm.confirmPassword"
+              type="password"
+              placeholder="确认密码"
+              size="large"
+              show-password
+              autocomplete="new-password"
+            >
+              <template #prefix>
+                <el-icon><Lock /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
+          <p class="register-hint">注册成功后将获得「患者」角色，可使用患者端功能。</p>
+          <el-form-item style="margin-top: 10px">
+            <el-button
+              type="primary"
+              class="login-btn"
+              size="large"
+              :loading="registerLoading"
+              @click="handleRegister"
+            >
+              注&nbsp;&nbsp;册
+            </el-button>
+          </el-form-item>
         </el-form>
       </el-card>
       <!-- 页脚 -->
@@ -72,19 +178,30 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, UserFilled, Lock, Iphone } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { login } from '@/api/auth'
+import { login, register } from '@/api/auth'
 
 const router = useRouter()
 const route = useRoute()
 const formRef = ref(null)
+const registerFormRef = ref(null)
 const loading = ref(false)
+const registerLoading = ref(false)
+const activeTab = ref('login')
 
 const form = reactive({
   username: '',
   password: ''
+})
+
+const registerForm = reactive({
+  username: '',
+  name: '',
+  mobilePhone: '',
+  password: '',
+  confirmPassword: ''
 })
 
 const rules = {
@@ -92,8 +209,53 @@ const rules = {
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
 
+const registerRules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 32, message: '用户名为 3～32 个字符', trigger: 'blur' }
+  ],
+  name: [{ max: 50, message: '姓名最多 50 个字符', trigger: 'blur' }],
+  mobilePhone: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!value || value.trim() === '') {
+          callback()
+          return
+        }
+        if (!/^1\d{10}$/.test(value.trim())) {
+          callback(new Error('请输入 11 位有效手机号'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 64, message: '密码为 6～64 个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    {
+      validator: (_rule, value, callback) => {
+        if (value !== registerForm.password) {
+          callback(new Error('两次输入的密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
 const handleLogin = async () => {
-  await formRef.value?.validate().catch(() => {})
+  try {
+    await formRef.value?.validate()
+  } catch {
+    return
+  }
   loading.value = true
   try {
     const data = await login(form)
@@ -104,6 +266,35 @@ const handleLogin = async () => {
     console.error(e)
   } finally {
     loading.value = false
+  }
+}
+
+const handleRegister = async () => {
+  try {
+    await registerFormRef.value?.validate()
+  } catch {
+    return
+  }
+  registerLoading.value = true
+  try {
+    const savedUsername = registerForm.username.trim()
+    await register({
+      username: savedUsername,
+      name: registerForm.name.trim() || undefined,
+      mobilePhone: registerForm.mobilePhone.trim() || undefined,
+      password: registerForm.password,
+      confirmPassword: registerForm.confirmPassword
+    })
+    ElMessage.success('注册成功，请使用新账号登录')
+    form.username = savedUsername
+    form.password = ''
+    activeTab.value = 'login'
+    registerFormRef.value?.resetFields()
+    registerForm.username = savedUsername
+  } catch (e) {
+    console.error(e)
+  } finally {
+    registerLoading.value = false
   }
 }
 </script>
@@ -181,7 +372,7 @@ const handleLogin = async () => {
 
 /* 毛玻璃透明卡片 */
 .login-card {
-  width: 400px;
+  width: 420px;
   margin-top: 12px;
   border-radius: 16px;
   background: rgba(255, 252, 250, 0.35);
@@ -198,17 +389,41 @@ const handleLogin = async () => {
 .login-tabs {
   display: flex;
   margin: 6px 0 0 0;
-  height: 38px;
+  height: 40px;
+  gap: 8px;
+  border-bottom: 1px solid rgba(80, 50, 30, 0.2);
 }
 
 .tab {
-  width: 100%;
+  flex: 1;
   text-align: center;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: bold;
-  line-height: 38px;
+  line-height: 40px;
   color: #2c1810;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  opacity: 0.55;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+  opacity: 0.85;
+}
+
+.tab.active {
+  opacity: 1;
+  border-bottom-color: #c4702a;
+}
+
+.register-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #4a3520;
+  opacity: 0.9;
 }
 
 .login-form {

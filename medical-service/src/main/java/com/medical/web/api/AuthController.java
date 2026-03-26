@@ -1,12 +1,18 @@
 package com.medical.web.api;
 
+import com.medical.common.exception.BusinessWarningException;
+import com.medical.common.exception.ServiceException;
 import com.medical.common.response.GlobalCodeEnum;
 import com.medical.common.response.ResultVo;
 import com.medical.domain.dto.LoginForm;
+import com.medical.domain.dto.RegisterForm;
+import com.medical.domain.entity.SysRole;
 import com.medical.domain.entity.SysUser;
+import com.medical.domain.entity.SysUserRole;
 import com.medical.domain.vo.UserInfoVo;
 import com.medical.mapper.SysRoleMapper;
 import com.medical.mapper.SysUserMapper;
+import com.medical.mapper.SysUserRoleMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -19,9 +25,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +44,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SysUserMapper sysUserMapper;
     private final SysRoleMapper sysRoleMapper;
+    private final SysUserRoleMapper sysUserRoleMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/api/login")
     public ResultVo<UserInfoVo> login(@Valid @RequestBody LoginForm form,
@@ -75,6 +86,52 @@ public class AuthController {
         } catch (AuthenticationException e) {
             return ResultVo.build(GlobalCodeEnum.AUTH_ERROR);
         }
+    }
+
+    @PostMapping("/api/register")
+    public ResultVo<Void> register(@Valid @RequestBody RegisterForm form) {
+        String username = form.getUsername().trim();
+        if (!form.getPassword().equals(form.getConfirmPassword())) {
+            throw new BusinessWarningException("两次输入的密码不一致");
+        }
+        if (StringUtils.hasText(form.getMobilePhone())
+                && !form.getMobilePhone().trim().matches("^1\\d{10}$")) {
+            throw new BusinessWarningException("手机号格式不正确");
+        }
+        long exist = sysUserMapper.selectCount(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysUser>()
+                        .eq(SysUser::getUsername, username)
+        );
+        if (exist > 0) {
+            throw new BusinessWarningException("用户名已被占用");
+        }
+        SysRole patientRole = sysRoleMapper.selectOne(
+                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<SysRole>()
+                        .eq(SysRole::getRoleCode, "PATIENT")
+                        .eq(SysRole::getStatus, 1)
+        );
+        if (patientRole == null) {
+            throw new ServiceException("系统未配置患者角色，请联系管理员");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        SysUser user = new SysUser();
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(form.getPassword()));
+        user.setName(StringUtils.hasText(form.getName()) ? form.getName().trim() : user.getUsername());
+        user.setMobilePhone(StringUtils.hasText(form.getMobilePhone()) ? form.getMobilePhone().trim() : null);
+        user.setStatus(1);
+        user.setCreatedTime(now);
+        user.setUpdatedTime(now);
+        sysUserMapper.insert(user);
+
+        SysUserRole userRole = new SysUserRole();
+        userRole.setUserId(user.getUserId());
+        userRole.setRoleId(patientRole.getRoleId());
+        userRole.setCreatedTime(now);
+        sysUserRoleMapper.insert(userRole);
+
+        return ResultVo.ok();
     }
 
     @PostMapping("/api/logout")
