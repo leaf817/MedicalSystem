@@ -160,6 +160,8 @@
     <el-dialog
       v-model="createDialogVisible"
       width="520px"
+      :append-to-body="true"
+      :modal-append-to-body="true"
       class="user-mgmt-dialog create-dialog"
       :close-on-click-modal="false"
       align-center
@@ -271,6 +273,8 @@
     <el-dialog
       v-model="editDialogVisible"
       width="520px"
+      :append-to-body="true"
+      :modal-append-to-body="true"
       class="user-mgmt-dialog"
       :close-on-click-modal="false"
       align-center

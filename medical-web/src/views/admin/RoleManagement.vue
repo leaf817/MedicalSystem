@@ -128,6 +128,8 @@
     <el-dialog
       v-model="editDialogVisible"
       width="440px"
+      :append-to-body="true"
+      :modal-append-to-body="true"
       class="edit-dialog"
       :close-on-click-modal="false"
       align-center
@@ -166,6 +168,8 @@
       v-if="isSuperAdmin"
       v-model="createDialogVisible"
       width="440px"
+      :append-to-body="true"
+      :modal-append-to-body="true"
       class="edit-dialog"
       :close-on-click-modal="false"
       align-center
