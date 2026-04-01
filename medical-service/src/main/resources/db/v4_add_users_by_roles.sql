@@ -324,5 +324,41 @@ INSERT IGNORE INTO sys_user_role (user_id, role_id, created_time)
 SELECT u.user_id, r.role_id, NOW() FROM sys_user u, sys_role r
 WHERE u.username = 'patient1010' AND r.role_code = 'PATIENT';
 
+-- ----------------------------
+-- 3) 专科/医师类角色补授「医生」基础角色（医生列表按 DOCTOR 筛选，须同时拥有）
+--    与 v7_sync_doctor_base_role.sql 逻辑一致；新装库执行一次即可。
+-- ----------------------------
+INSERT IGNORE INTO sys_user_role (user_id, role_id, created_time)
+SELECT DISTINCT ur.user_id, dr.role_id, NOW()
+FROM sys_user_role ur
+INNER JOIN sys_role sr ON ur.role_id = sr.role_id AND sr.status = 1
+INNER JOIN sys_role dr ON dr.role_code = 'DOCTOR' AND dr.status = 1
+WHERE sr.role_code IN (
+  'ER_DOCTOR',
+  'PEDIATRICIAN',
+  'INTERNIST',
+  'SURGEON',
+  'GYNECOLOGIST',
+  'ORTHOPEDIST',
+  'DERMATOLOGIST',
+  'OPHTHALMOLOGIST',
+  'ENT_DOCTOR',
+  'CARDIOLOGIST',
+  'NEUROLOGIST',
+  'ONCOLOGIST',
+  'PSYCHIATRIST',
+  'TCM_DOCTOR',
+  'REHAB_DOCTOR',
+  'NUTRITIONIST',
+  'ANESTHESIOLOGIST',
+  'PATHOLOGIST'
+)
+AND NOT EXISTS (
+  SELECT 1
+  FROM sys_user_role ur2
+  INNER JOIN sys_role r2 ON ur2.role_id = r2.role_id AND r2.role_code = 'DOCTOR'
+  WHERE ur2.user_id = ur.user_id
+);
+
 -- 额外兜底：若将来角色表新增了 role_code，本脚本不会自动生成用户；可按同一规则继续追加。
 

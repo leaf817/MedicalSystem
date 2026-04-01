@@ -365,6 +365,34 @@ INSERT IGNORE INTO sys_user_role (user_id, role_id, created_time)
 SELECT u.user_id, r.role_id, NOW() FROM sys_user u, sys_role r
 WHERE u.username LIKE 'doc_v6_%' AND r.role_code = 'DOCTOR';
 
+-- 批量医生按账号序号轮换 18 类专科角色（与 DOCTOR 并存，专科约 2～3 人/类，便于列表展示）
+INSERT IGNORE INTO sys_user_role (user_id, role_id, created_time)
+SELECT u.user_id, r.role_id, NOW()
+FROM sys_user u
+JOIN sys_role r ON r.role_code = (
+  CASE MOD(CAST(SUBSTRING_INDEX(u.username, '_', -1) AS UNSIGNED), 18)
+    WHEN 0 THEN 'ER_DOCTOR'
+    WHEN 1 THEN 'PEDIATRICIAN'
+    WHEN 2 THEN 'INTERNIST'
+    WHEN 3 THEN 'SURGEON'
+    WHEN 4 THEN 'GYNECOLOGIST'
+    WHEN 5 THEN 'ORTHOPEDIST'
+    WHEN 6 THEN 'DERMATOLOGIST'
+    WHEN 7 THEN 'OPHTHALMOLOGIST'
+    WHEN 8 THEN 'ENT_DOCTOR'
+    WHEN 9 THEN 'CARDIOLOGIST'
+    WHEN 10 THEN 'NEUROLOGIST'
+    WHEN 11 THEN 'ONCOLOGIST'
+    WHEN 12 THEN 'PSYCHIATRIST'
+    WHEN 13 THEN 'TCM_DOCTOR'
+    WHEN 14 THEN 'REHAB_DOCTOR'
+    WHEN 15 THEN 'NUTRITIONIST'
+    WHEN 16 THEN 'ANESTHESIOLOGIST'
+    WHEN 17 THEN 'PATHOLOGIST'
+  END
+)
+WHERE u.username LIKE 'doc_v6_%';
+
 INSERT IGNORE INTO sys_user_role (user_id, role_id, created_time)
 SELECT u.user_id, r.role_id, NOW() FROM sys_user u, sys_role r
 WHERE u.username LIKE 'nurse_v6_%' AND r.role_code = 'NURSE';
