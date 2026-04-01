@@ -5,10 +5,7 @@
         <i class="fa-solid fa-pills page-icon"></i>
         <div>
           <h2 class="page-title">药品列表</h2>
-          <p class="page-desc">
-            查询药品编码、分类、规格与库存信息
-            <span v-if="stockWarningSwitch" class="page-desc-badge">当前：仅显示库存预警</span>
-          </p>
+          <p class="page-desc">查询药品编码、分类、规格与库存信息</p>
         </div>
       </div>
     </div>
@@ -60,11 +57,6 @@
             <el-option :value="1" label="在用" />
             <el-option :value="0" label="停用" />
           </el-select>
-
-          <span class="stock-warning-switch-wrap">
-            <el-switch v-model="stockWarningSwitch" @change="onStockWarningChange" />
-            <span class="stock-warning-label">仅看库存预警</span>
-          </span>
         </div>
         <el-button class="add-user-btn" @click="openCreateDialog">
           <i class="fa-solid fa-plus"></i>
@@ -325,7 +317,6 @@ import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getMedicinePage,
-  getMedicineStockWarning,
   getMedicineCategories,
   createMedicine,
   updateMedicine,
@@ -341,7 +332,6 @@ const keyword = ref('')
 const categoryIdFilter = ref(null)
 const statusFilter = ref(null)
 const categoryOptions = ref([])
-const stockWarningSwitch = ref(false)
 
 const createDialogVisible = ref(false)
 const isEditMode = ref(false)
@@ -403,11 +393,6 @@ const tableRowClassName = ({ row, rowIndex }) => {
   return parts.join(' ')
 }
 
-const onStockWarningChange = () => {
-  currentPage.value = 1
-  loadData()
-}
-
 const formatMoney = (v) => {
   if (v === null || v === undefined) return '-'
   const n = Number(v)
@@ -434,9 +419,7 @@ const loadData = async () => {
     status: statusFilter.value ?? undefined
   }
   try {
-    const res = stockWarningSwitch.value
-        ? await getMedicineStockWarning(params)
-        : await getMedicinePage(params)
+    const res = await getMedicinePage(params)
     tableData.value = res.list || []
     total.value = res.total || 0
   } catch {
@@ -609,16 +592,6 @@ onMounted(() => {
   color: #5c4a32;
 }
 
-.page-desc-badge {
-  margin-left: 10px;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #b45309;
-  background: rgba(255, 183, 120, 0.35);
-  border-radius: 6px;
-}
-
 .content-card {
   border-radius: 16px;
   background: rgba(255, 252, 250, 0.55);
@@ -647,20 +620,6 @@ onMounted(() => {
   max-width: 1100px;
   flex: 1;
   min-width: 220px;
-}
-
-.stock-warning-switch-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 4px;
-  white-space: nowrap;
-}
-
-.stock-warning-label {
-  font-size: 13px;
-  color: #5c4a32;
-  user-select: none;
 }
 
 .search-icon {
