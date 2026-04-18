@@ -62,7 +62,7 @@ const routes = [
       { path: 'user/password', component: Placeholder, meta: { title: '修改密码' } },
       { path: 'doctor/dashboard', component: Placeholder, meta: { title: '医生工作台' } },
       { path: 'doctor/schedule', component: Placeholder, meta: { title: '我的排班' } },
-      { path: 'doctor/queue', component: Placeholder, meta: { title: '待诊队列' } },
+      { path: 'doctor/queue', component: () => import('@/views/doctor/QueueList.vue'), meta: { title: '待诊队列' } },      
       {
         path: 'doctor/medical-record',
         name: 'MedicalRecordList',

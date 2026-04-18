@@ -402,3 +402,116 @@ export function checkInAppointment(appointmentId) {
   })
 }
 
+// ==================== 待诊队列（医生端） ====================
+
+/**
+ * 获取待诊队列列表
+ * @param {Object} params - 查询参数
+ * @param {number} params.status - 状态筛选（1=待就诊 2=已就诊 3=已取消）
+ * @param {string} params.keyword - 关键词搜索
+ * @param {number} params.queueNo - 排队号
+ * @param {string} params.queryDate - 查询日期 (yyyy-MM-dd)
+ */
+export function getQueueList(params) {
+  return request({
+    url: '/doctor/queue/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 开始接诊
+ */
+export function startConsultation(appointmentId) {
+  return request({
+    url: `/doctor/queue/${appointmentId}/start`,
+    method: 'put'
+  })
+}
+
+/**
+ * 完成就诊
+ */
+export function completeConsultation(appointmentId) {
+  return request({
+    url: `/doctor/queue/${appointmentId}/complete`,
+    method: 'put'
+  })
+}
+
+/**
+ * 叫号
+ */
+export function callNext(appointmentId) {
+  return request({
+    url: `/doctor/queue/${appointmentId}/call`,
+    method: 'put'
+  })
+}
+
+/**
+ * 获取当前叫号信息
+ */
+export function getCurrentCalling(queryDate) {
+  return request({
+    url: '/doctor/queue/current-calling',
+    method: 'get',
+    params: { queryDate }
+  })
+}
+
+/**
+ * 获取医生统计
+ */
+export function getTodayStats(queryDate) {
+  return request({
+    url: '/doctor/queue/stats',
+    method: 'get',
+    params: { queryDate }
+  })
+}
+
+/**
+ * 获取可用日期
+ */
+export function getAvailableQueueDates() {
+  return request({
+    url: '/doctor/queue/available-dates',
+    method: 'get'
+  })
+}
+
+/**
+ * 医生取消预约
+ */
+export function doctorCancelAppointment(appointmentId) {
+  return request({
+    url: `/doctor/queue/cancel/${appointmentId}`,
+    method: 'put'
+  })
+}
+
+/**
+ * 重新排序队列
+ */
+export function resortQueue() {
+  return request({
+    url: '/doctor/queue/resort',
+    method: 'put'
+  })
+}
+
+// ==================== 排队叫号相关 ====================
+
+/**
+ * 获取排队信息（包括排队列表）
+ * @param {string} queryDate - 查询日期
+ */
+export function getQueueInfo(queryDate) {
+  return request({
+    url: '/doctor/queue/queue-info',
+    method: 'get',
+    params: { queryDate }
+  })
+}
