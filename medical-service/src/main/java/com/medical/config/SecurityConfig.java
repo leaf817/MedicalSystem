@@ -43,6 +43,8 @@ public class SecurityConfig {
                         // 给医生开放排班查询接口权限
                         .requestMatchers(HttpMethod.GET, "/api/admin/schedule/list").hasAnyRole("ADMIN", "SUPER_ADMIN", "DOCTOR")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+
+                        // ========== 各端接口 ==========
                         .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/nurse/**").hasAnyRole("NURSE", "ADMIN", "SUPER_ADMIN")

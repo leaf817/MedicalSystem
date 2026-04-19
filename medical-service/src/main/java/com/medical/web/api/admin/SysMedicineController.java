@@ -232,4 +232,40 @@ public class SysMedicineController {
         }).collect(Collectors.toList());
         return ResultVo.ok(voList);
     }
+
+    /**
+     * 搜索药品（用于处方开立时的药品选择）
+     */
+    @GetMapping("/search")
+    public ResultVo<List<MedicineListVo>> search(
+            @RequestParam String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return ResultVo.ok(List.of());
+        }
+
+        LambdaQueryWrapper<Medicine> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Medicine::getStatus, 1)
+                .and(w -> w.like(Medicine::getName, keyword.trim())
+                        .or().like(Medicine::getCommonName, keyword.trim())
+                        .or().like(Medicine::getMedicineCode, keyword.trim()))
+                .last("LIMIT 20");
+
+        List<Medicine> list = medicineMapper.selectList(wrapper);
+
+        List<MedicineListVo> voList = list.stream().map(m -> {
+            MedicineListVo vo = new MedicineListVo();
+            BeanUtils.copyProperties(m, vo);
+            // 获取分类名称
+            if (m.getCategoryId() != null) {
+                MedicineCategory c = medicineCategoryMapper.selectById(m.getCategoryId());
+                if (c != null) {
+                    vo.setCategoryName(c.getName());
+                }
+            }
+            return vo;
+        }).collect(Collectors.toList());
+
+        return ResultVo.ok(voList);
+    }
+
 }

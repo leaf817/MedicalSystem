@@ -88,34 +88,34 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
-  routes
+    history: createWebHistory(),
+    routes
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = (to.meta.title ? to.meta.title + ' - ' : '') + '智能医疗服务管理系统'
-  if (to.meta.guest) {
-    next()
-    return
-  }
-  const userInfo = sessionStorage.getItem('userInfo')
-  if (!userInfo && to.path !== '/login') {
-    next({ path: '/login', query: { redirect: to.fullPath } })
-    return
-  }
-  if (to.meta.requiresSuperAdmin && userInfo) {
-    try {
-      const roles = JSON.parse(userInfo).roles || []
-      if (!roles.includes('SUPER_ADMIN')) {
-        next({ path: '/admin/dashboard', replace: true })
+    document.title = (to.meta.title ? to.meta.title + ' - ' : '') + '智能医疗服务管理系统'
+    if (to.meta.guest) {
+        next()
         return
-      }
-    } catch {
-      next({ path: '/admin/dashboard', replace: true })
-      return
     }
-  }
-  next()
+    const userInfo = sessionStorage.getItem('userInfo')
+    if (!userInfo && to.path !== '/login') {
+        next({ path: '/login', query: { redirect: to.fullPath } })
+        return
+    }
+    if (to.meta.requiresSuperAdmin && userInfo) {
+        try {
+            const roles = JSON.parse(userInfo).roles || []
+            if (!roles.includes('SUPER_ADMIN')) {
+                next({ path: '/admin/dashboard', replace: true })
+                return
+            }
+        } catch {
+            next({ path: '/admin/dashboard', replace: true })
+            return
+        }
+    }
+    next()
 })
 
 export default router

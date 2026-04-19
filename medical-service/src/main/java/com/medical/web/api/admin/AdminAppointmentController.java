@@ -253,6 +253,9 @@ public class AdminAppointmentController {
     /**
      * 签到
      */
+    /**
+     * 签到 - 分配排队号（按天重置）
+     */
     @PutMapping("/{appointmentId}/checkin")
     public ResultVo<Void> checkin(@PathVariable Long appointmentId) {
         Appointment a = appointmentMapper.selectById(appointmentId);
@@ -265,12 +268,38 @@ public class AdminAppointmentController {
         if (a.getPaid() == null || a.getPaid() != 1) {
             throw new BusinessWarningException("请先支付挂号费");
         }
-        a.setStatus(2); // 改为已就诊
+
+        // 已分配过排队号则不再重复分配
+        if (a.getQueueNo() != null && a.getQueueNo() > 0) {
+            throw new BusinessWarningException("该预约已完成签到，排队号为：" + a.getQueueNo());
+        }
+
+        // 查询当前医生、当前日期、当前时段最大的排队号
+        Integer maxQueueNo = (Integer) appointmentMapper.selectObjs(
+                new LambdaQueryWrapper<Appointment>()
+                        .eq(Appointment::getDoctorId, a.getDoctorId())
+                        .eq(Appointment::getAppointmentDate, a.getAppointmentDate())  // 关键：加上日期条件
+                        .eq(Appointment::getTimeSlot, a.getTimeSlot())
+                        .eq(Appointment::getStatus, 1)  // 只统计待就诊状态
+                        .isNotNull(Appointment::getQueueNo)
+                        .select(Appointment::getQueueNo)
+                        .orderByDesc(Appointment::getQueueNo)
+                        .last("limit 1")
+        ).stream().findFirst().orElse(null);
+
+        int newQueueNo = (maxQueueNo == null ? 1 : maxQueueNo + 1);
+
+        a.setQueueNo(newQueueNo);
         a.setCheckInTime(LocalDateTime.now());
         a.setUpdatedTime(LocalDateTime.now());
+
         appointmentMapper.updateById(a);
+
         return ResultVo.ok();
     }
+
+
+
     private String statusText(Integer status) {
         if (status == null) return "未知";
         switch (status) {
