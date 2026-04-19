@@ -12,8 +12,12 @@ public class MedicalRecordVo {
     private Long patientId;
     private String patientName;
     private String patientNo;
-    private Integer patientGender;
+    /** 患者性别，与档案一致，如 M/F */
+    private String patientGender;
     private Integer patientAge;
+    /** 患者联系电话（详情接口补充） */
+    private String patientPhone;
+    private LocalDate patientBirthDate;
     private Long doctorId;
     private String doctorName;
     private String doctorTitle;

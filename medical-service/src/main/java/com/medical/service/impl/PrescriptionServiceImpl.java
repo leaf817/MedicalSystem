@@ -49,33 +49,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             throw new BusinessWarningException("只能为自己的病历开处方");
         }
 
-        // 验证并计算总金额
         List<PrescriptionDetail> details = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
-
         for (PrescriptionCreateDto.PrescriptionDetailDto detailDto : dto.getDetails()) {
-            Medicine medicine = medicineMapper.selectById(detailDto.getMedicineId());
-            if (medicine == null) {
-                throw new BusinessWarningException("药品不存在");
-            }
-            if (medicine.getStatus() == null || medicine.getStatus() != 1) {
-                throw new BusinessWarningException("药品已停用: " + medicine.getName());
-            }
-            if (medicine.getStockQuantity() < detailDto.getQuantity()) {
-                throw new BusinessWarningException("药品库存不足: " + medicine.getName() +
-                        "，当前库存: " + medicine.getStockQuantity());
-            }
-
-            BigDecimal amount = medicine.getUnitPrice().multiply(BigDecimal.valueOf(detailDto.getQuantity()));
-            totalAmount = totalAmount.add(amount);
-
-            PrescriptionDetail detail = new PrescriptionDetail();
-            detail.setMedicineId(detailDto.getMedicineId());
-            detail.setQuantity(detailDto.getQuantity());
-            detail.setDosage(detailDto.getDosage());
-            detail.setUnitPrice(medicine.getUnitPrice());
-            detail.setAmount(amount);
-            detail.setRemark(detailDto.getRemark());
+            Medicine medicine = requireMedicineForLine(detailDto.getMedicineId(), detailDto.getQuantity(), true);
+            PrescriptionDetail detail = toDetailEntity(medicine, detailDto.getQuantity(), detailDto.getDosage(), detailDto.getRemark());
+            totalAmount = totalAmount.add(detail.getAmount());
             details.add(detail);
         }
 
@@ -127,32 +106,16 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescriptionDetailMapper.delete(
                 new LambdaQueryWrapper<PrescriptionDetail>().eq(PrescriptionDetail::getPrescriptionId, id));
 
-        // 重新计算总金额并创建明细
         List<PrescriptionDetail> details = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
-
+        LocalDateTime now = LocalDateTime.now();
         for (PrescriptionUpdateDto.PrescriptionDetailDto detailDto : dto.getDetails()) {
-            Medicine medicine = medicineMapper.selectById(detailDto.getMedicineId());
-            if (medicine == null) {
-                throw new BusinessWarningException("药品不存在");
-            }
-            if (medicine.getStatus() == null || medicine.getStatus() != 1) {
-                throw new BusinessWarningException("药品已停用: " + medicine.getName());
-            }
-
-            BigDecimal amount = medicine.getUnitPrice().multiply(BigDecimal.valueOf(detailDto.getQuantity()));
-            totalAmount = totalAmount.add(amount);
-
-            PrescriptionDetail detail = new PrescriptionDetail();
+            Medicine medicine = requireMedicineForLine(detailDto.getMedicineId(), detailDto.getQuantity(), true);
+            PrescriptionDetail detail = toDetailEntity(medicine, detailDto.getQuantity(), detailDto.getDosage(), detailDto.getRemark());
             detail.setPrescriptionId(id);
-            detail.setMedicineId(detailDto.getMedicineId());
-            detail.setQuantity(detailDto.getQuantity());
-            detail.setDosage(detailDto.getDosage());
-            detail.setUnitPrice(medicine.getUnitPrice());
-            detail.setAmount(amount);
-            detail.setRemark(detailDto.getRemark());
-            detail.setCreatedTime(LocalDateTime.now());
-            detail.setUpdatedTime(LocalDateTime.now());
+            detail.setCreatedTime(now);
+            detail.setUpdatedTime(now);
+            totalAmount = totalAmount.add(detail.getAmount());
             details.add(detail);
         }
 
@@ -326,6 +289,33 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         return prescriptions.stream()
                 .map(p -> getPrescriptionDetail(p.getPrescriptionId()))
                 .collect(Collectors.toList());
+    }
+
+    private Medicine requireMedicineForLine(Long medicineId, int quantity, boolean checkStock) {
+        Medicine medicine = medicineMapper.selectById(medicineId);
+        if (medicine == null) {
+            throw new BusinessWarningException("药品不存在");
+        }
+        if (medicine.getStatus() == null || medicine.getStatus() != 1) {
+            throw new BusinessWarningException("药品已停用: " + medicine.getName());
+        }
+        if (checkStock && medicine.getStockQuantity() < quantity) {
+            throw new BusinessWarningException("药品库存不足: " + medicine.getName() +
+                    "，当前库存: " + medicine.getStockQuantity());
+        }
+        return medicine;
+    }
+
+    private static PrescriptionDetail toDetailEntity(Medicine medicine, int quantity, String dosage, String remark) {
+        BigDecimal amount = medicine.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
+        PrescriptionDetail detail = new PrescriptionDetail();
+        detail.setMedicineId(medicine.getMedicineId());
+        detail.setQuantity(quantity);
+        detail.setDosage(dosage);
+        detail.setUnitPrice(medicine.getUnitPrice());
+        detail.setAmount(amount);
+        detail.setRemark(remark);
+        return detail;
     }
 
     private String generatePrescriptionNo() {

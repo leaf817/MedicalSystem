@@ -125,6 +125,9 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
             if (patient != null) {
                 vo.setPatientName(patient.getName());
                 vo.setPatientNo(patient.getPatientNo());
+                vo.setPatientPhone(patient.getPhone());
+                vo.setPatientBirthDate(patient.getBirthDate());
+                vo.setPatientGender(patient.getGender());
             }
         }
 

@@ -367,9 +367,9 @@ import {
   getPrescriptionDetail,
   deletePrescription,
   getUserPage,
-  getMedicalRecordById,
   getMyPrescriptions
 } from '@/api/admin'
+import { getMedicalRecordById } from '@/api/doctor'
 
 const route = useRoute()
 const router = useRouter()

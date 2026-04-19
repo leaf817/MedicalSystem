@@ -635,39 +635,6 @@ export function getNursePrescriptionDetail(id) {
   })
 }
 
-// ==================== 病历管理 ====================
-
-/**
- * 根据病历ID获取病历详情
- */
-export function getMedicalRecordById(recordId) {
-  return request({
-    url: `/doctor/medical-record/${recordId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 保存/更新病历
- */
-export function saveMedicalRecord(data) {
-  return request({
-    url: '/api/doctor/medical-record/save',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 获取患者病历列表
- */
-export function getPatientMedicalRecords(patientId) {
-  return request({
-    url: `/api/doctor/medical-record/patient/${patientId}`,
-    method: 'get'
-  })
-}
-
 // ==================== 医生端工作台统计 ====================
 
 export function getDoctorStatistics() {

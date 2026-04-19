@@ -42,6 +42,9 @@ export const getMedicalRecordDetail = (recordId) => {
     })
 }
 
+/** 与 getMedicalRecordDetail 相同，便于处方等页面语义化引入 */
+export const getMedicalRecordById = getMedicalRecordDetail
+
 // 保存病历（新增/编辑）
 export const saveMedicalRecord = (data) => {
     return request({
