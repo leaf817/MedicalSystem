@@ -9,10 +9,7 @@ import com.medical.common.pagination.PageResult;
 import com.medical.common.response.ResultVo;
 import com.medical.domain.dto.UserCreateDto;
 import com.medical.domain.dto.UserUpdateDto;
-import com.medical.domain.entity.SysDept;
-import com.medical.domain.entity.SysRole;
-import com.medical.domain.entity.SysUser;
-import com.medical.domain.entity.SysUserRole;
+import com.medical.domain.entity.*;
 import com.medical.domain.vo.UserListVo;
 import com.medical.mapper.SysDeptMapper;
 import com.medical.mapper.SysRoleMapper;
@@ -39,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.medical.mapper.PatientMapper;
 
 /**
  * 用户管理 API
@@ -56,6 +54,7 @@ public class SysUserController {
     private final StaffDeptAssignmentService staffDeptAssignmentService;
     private final PatientExtensionService patientExtensionService;
     private final PasswordEncoder passwordEncoder;
+    private final PatientMapper patientMapper;
 
     @GetMapping("/page")
     public ResultVo<PageResult<UserListVo>> page(
@@ -65,6 +64,7 @@ public class SysUserController {
             @RequestParam(value = "status", required = false) Integer status,
             @RequestParam(value = "deptId", required = false) Long deptId,
             @RequestParam(value = "roleCode", required = false) String roleCode,
+            @RequestParam(value = "userId", required = false) Long userId,
             @RequestParam(value = "sortField", required = false) String sortField,
             @RequestParam(value = "sortOrder", required = false) String sortOrder) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
@@ -78,6 +78,9 @@ public class SysUserController {
         }
         if (deptId != null) {
             wrapper.eq(SysUser::getDeptId, deptId);
+        }
+        if (userId != null) {
+            wrapper.eq(SysUser::getUserId, userId);
         }
         if (StringUtils.hasText(roleCode)) {
             SysRole role = sysRoleMapper.selectOne(
@@ -378,4 +381,19 @@ public class SysUserController {
         sysUserMapper.deleteById(id);
         return ResultVo.ok();
     }
+
+    /**
+     * 根据用户ID获取患者档案ID
+     */
+    @GetMapping("/getPatientId/{userId}")
+    public ResultVo<Long> getPatientIdByUserId(@PathVariable Long userId) {
+        Patient patient = patientMapper.selectOne(
+                new LambdaQueryWrapper<Patient>().eq(Patient::getUserId, userId)
+        );
+        if (patient == null) {
+            return ResultVo.ok(null);
+        }
+        return ResultVo.ok(patient.getPatientId());
+    }
+
 }

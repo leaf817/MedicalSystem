@@ -1,7 +1,8 @@
-// medical-service/src/main/java/com/medical/domain/entity/MedicalRecord.java
 package com.medical.domain.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,17 +38,13 @@ public class MedicalRecord {
 
     private String aiSuggestion;
 
-    private Integer status; // 1=草稿 2=已归档
+    private Integer status;
 
-    @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdTime;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updatedTime;
 
-    @TableField(fill = FieldFill.INSERT)
     private String createdBy;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updatedBy;
 }

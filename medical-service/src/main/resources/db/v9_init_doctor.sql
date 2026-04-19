@@ -22,12 +22,17 @@ INSERT INTO `doctor` (
     created_time,
     updated_time
 )
-SELECT
+SELECT DISTINCT
     u.user_id,
     CONCAT('DOC', LPAD(u.user_id, 6, '0')) AS doctor_no,
     u.name,
     u.dept_id,
-    r.role_name AS title,
+    -- 优先取专科角色名称，如果是 DOCTOR 则显示"通科医师"
+    CASE
+        WHEN MAX(CASE WHEN r.role_code != 'DOCTOR' THEN r.role_name END) IS NOT NULL
+            THEN MAX(CASE WHEN r.role_code != 'DOCTOR' THEN r.role_name END)
+        ELSE '通科医师'
+        END AS title,
     u.mobile_phone,
     50.00,
     u.status,
@@ -41,4 +46,5 @@ WHERE r.role_code IN ('ER_DOCTOR', 'PEDIATRICIAN', 'INTERNIST', 'SURGEON',
                       'OPHTHALMOLOGIST', 'ENT_DOCTOR', 'CARDIOLOGIST',
                       'NEUROLOGIST', 'ONCOLOGIST', 'PSYCHIATRIST',
                       'TCM_DOCTOR', 'REHAB_DOCTOR', 'NUTRITIONIST',
-                      'ANESTHESIOLOGIST', 'PATHOLOGIST');
+                      'ANESTHESIOLOGIST', 'PATHOLOGIST', 'DOCTOR')
+GROUP BY u.user_id, u.name, u.dept_id, u.mobile_phone, u.status

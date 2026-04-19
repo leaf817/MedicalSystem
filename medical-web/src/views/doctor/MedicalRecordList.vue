@@ -102,6 +102,9 @@
               <el-button link type="primary" size="small" @click="handleEdit(record)">
                 <i class="fa-solid fa-pen"></i> 编辑
               </el-button>
+              <el-button link type="success" size="small" @click="handlePrescribe(record)">
+                <i class="fa-solid fa-file-prescription"></i> 开处方
+              </el-button>
               <el-button link type="danger" size="small" @click="handleDelete(record)">
                 <i class="fa-solid fa-trash"></i> 删除
               </el-button>
@@ -122,6 +125,8 @@
     <el-dialog
         v-model="dialogVisible"
         :title="dialogTitle"
+        :append-to-body="true"
+        :modal-append-to-body="true"
         width="800px"
         class="record-dialog"
         destroy-on-close
@@ -157,7 +162,12 @@
 
         <!-- 病历信息 -->
         <div class="form-section">
-          <div class="section-title">病历信息</div>
+          <div class="section-title-wrapper">
+            <div class="section-title">病历信息</div>
+            <el-button type="success" size="small" @click="handlePrescribeFromDialog" :disabled="!form.patientId">
+              <i class="fa-solid fa-file-prescription"></i> 开处方
+            </el-button>
+          </div>
           <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="主诉" prop="chiefComplaint">
@@ -224,15 +234,17 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave" :loading="saving">
-          保存
-        </el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSave" :loading="saving">
+            保存
+          </el-button>
+        </div>
       </template>
     </el-dialog>
 
     <!-- 选择患者对话框 -->
-    <el-dialog v-model="showPatientDialog" title="选择患者" width="700px" class="patient-dialog" @open="loadAllPatients">
+    <el-dialog v-model="showPatientDialog" :append-to-body="true"  :modal-append-to-body="true" title="选择患者" width="700px" :z-index="3000" class="patient-dialog" @open="loadAllPatients">
       <div class="search-box">
         <el-input
             v-model="patientSearchKey"
@@ -277,6 +289,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getAllMedicalRecords,
@@ -287,6 +300,7 @@ import {
   getAllPatients
 } from '@/api/doctor'
 
+const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const searchKeyword = ref('')
@@ -394,6 +408,9 @@ const handleEdit = async (record) => {
   try {
     const res = await getMedicalRecordDetail(record.recordId)
     Object.assign(form, res)
+    form.patientNo = record.patientNo
+    form.patientId = record.patientId
+    form.patientName = record.patientName
     dialogVisible.value = true
   } catch (error) {
     ElMessage.error('加载病历失败')
@@ -416,6 +433,65 @@ const handleDelete = async (record) => {
       ElMessage.error('删除失败')
     }
   }
+}
+
+// 开处方（列表中的） - 传递 recordId
+const handlePrescribe = async (record) => {
+  router.push({
+    path: '/doctor/prescription',
+    query: {
+      recordId: record.recordId,
+      patientNo: record.patientNo
+    }
+  })
+}
+
+// 开处方（模态框中的） - 传递 recordId
+// 开处方（模态框中的）
+const handlePrescribeFromDialog = async () => {
+  if (!form.patientId) {
+    ElMessage.warning('请先选择患者')
+    return
+  }
+
+  // 如果没有 recordId（新建病历），先保存获取 recordId
+  if (!form.recordId) {
+    try {
+      await formRef.value.validate()
+      const res = await saveMedicalRecord(form)
+      if (res && res.recordId) {
+        form.recordId = res.recordId
+        form.patientNo = res.patientNo
+        ElMessage.success('病历已保存')
+      } else {
+        ElMessage.error('保存病历失败')
+        return
+      }
+    } catch (error) {
+      ElMessage.error('请填写完整的病历信息')
+      return
+    }
+  } else {
+    // 已有病历，直接保存更新
+    try {
+      await saveMedicalRecord(form)
+    } catch (error) {
+      ElMessage.error('保存病历失败')
+      return
+    }
+  }
+
+  // 关闭对话框
+  dialogVisible.value = false
+
+  // 从 form 中获取 patientNo，而不是 record
+  router.push({
+    path: '/doctor/prescription',
+    query: {
+      recordId: form.recordId,
+      patientNo: form.patientNo
+    }
+  })
 }
 
 // 保存病历
@@ -476,6 +552,7 @@ const searchPatient = async () => {
 const selectPatient = (patient) => {
   form.patientId = patient.patientId
   form.patientName = patient.name
+  form.patientNo = patient.patientNo
   showPatientDialog.value = false
   patientList.value = []
   patientSearchKey.value = ''
@@ -793,4 +870,27 @@ onMounted(() => {
 .patient-arrow {
   color: #b0a088;
 }
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.section-title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c1810;
+  padding-left: 8px;
+  border-left: 3px solid #2c7a5e;
+  margin-bottom: 0;
+}
+
 </style>

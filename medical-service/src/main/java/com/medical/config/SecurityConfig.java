@@ -11,9 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Spring Security 配置
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -36,19 +33,23 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITE_LIST).permitAll()
-                        // 角色下拉列表供医院管理员维护用户；其余角色 CRUD 仅超级管理员
                         .requestMatchers(HttpMethod.GET, "/api/admin/role/list").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/admin/role/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/manage/**").hasRole("SUPER_ADMIN")
-                        // 科室接口允许患者访问
                         .requestMatchers(HttpMethod.GET, "/api/admin/dept/options").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/admin/dept/tree").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
                         .requestMatchers(HttpMethod.GET, "/api/admin/dept/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
-                        // 用户/医生查询接口允许患者访问（用于预约时查看医生列表）
-                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
-                        // 其他 admin 接口保持原样
+
+                        // ========== 医生端和患者端需要调用的接口（必须放在 /api/admin/** 之前） ==========
+                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN", "PATIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/medicine/page").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/user/getPatientId/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/medicine/categories").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
+
+                        // ========== 其他 admin 接口 ==========
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                        // 医生端接口权限（包括取消预约）
+
+                        // ========== 各端接口 ==========
                         .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/nurse/**").hasAnyRole("NURSE", "ADMIN", "SUPER_ADMIN")

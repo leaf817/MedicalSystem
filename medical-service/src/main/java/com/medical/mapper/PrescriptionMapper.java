@@ -1,9 +1,9 @@
 package com.medical.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.medical.domain.entity.MedicalRecord;
+import com.medical.domain.entity.Prescription;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface MedicalRecordMapper extends BaseMapper<MedicalRecord> {
+public interface PrescriptionMapper extends BaseMapper<Prescription> {
 }

@@ -57,7 +57,7 @@
             <div style="align-items: center;">
               <el-button link type="primary" @click="openDetail(row)">详情</el-button>
               <el-button
-                  v-if="row.status === 1 && row.paid === 1"
+                  v-if="row.status === 1 && row.paid === 1 && !row.queueNo"
                   link
                   type="success"
                   @click="checkinRow(row)"

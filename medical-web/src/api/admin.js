@@ -406,11 +406,6 @@ export function checkInAppointment(appointmentId) {
 
 /**
  * 获取待诊队列列表
- * @param {Object} params - 查询参数
- * @param {number} params.status - 状态筛选（1=待就诊 2=已就诊 3=已取消）
- * @param {string} params.keyword - 关键词搜索
- * @param {number} params.queueNo - 排队号
- * @param {string} params.queryDate - 查询日期 (yyyy-MM-dd)
  */
 export function getQueueList(params) {
   return request({
@@ -513,5 +508,134 @@ export function getQueueInfo(queryDate) {
     url: '/doctor/queue/queue-info',
     method: 'get',
     params: { queryDate }
+  })
+}
+
+// ==================== 医生端处方 ====================
+
+/**
+ * 开立处方
+ */
+export function createPrescription(data) {
+  return request({
+    url: '/doctor/prescription',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新处方
+ */
+export function updatePrescription(id, data) {
+  return request({
+    url: `/doctor/prescription/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除处方
+ */
+export function deletePrescription(id) {
+  return request({
+    url: `/doctor/prescription/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 获取处方详情
+ */
+export function getPrescriptionDetail(id) {
+  return request({
+    url: `/doctor/prescription/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取病历下的处方列表
+ */
+export function getPrescriptionsByRecord(recordId) {
+  return request({
+    url: `/doctor/prescription/record/${recordId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取患者的处方列表
+ */
+export function getPrescriptionsByPatient(patientId) {
+  return request({
+    url: `/doctor/prescription/patient/${patientId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取当前医生的处方列表
+ */
+export function getMyPrescriptions(params) {
+  return request({
+    url: '/doctor/prescription/my',
+    method: 'get',
+    params
+  })
+}
+
+// ==================== 药房端处方 ====================
+
+/**
+ * 待发药列表
+ */
+export function getPendingPrescriptions(keyword) {
+  return request({
+    url: '/nurse/prescription/pending',
+    method: 'get',
+    params: { keyword }
+  })
+}
+
+/**
+ * 已发药列表
+ */
+export function getDispensedPrescriptions(keyword) {
+  return request({
+    url: '/nurse/prescription/dispensed',
+    method: 'get',
+    params: { keyword }
+  })
+}
+
+/**
+ * 发药确认
+ */
+export function dispensePrescription(id) {
+  return request({
+    url: `/nurse/prescription/${id}/dispense`,
+    method: 'put'
+  })
+}
+
+/**
+ * 药房端获取处方详情
+ */
+export function getNursePrescriptionDetail(id) {
+  return request({
+    url: `/nurse/prescription/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 根据病历ID获取病历详情
+ */
+export function getMedicalRecordById(recordId) {
+  return request({
+    url: `/doctor/medical-record/${recordId}`,
+    method: 'get'
   })
 }

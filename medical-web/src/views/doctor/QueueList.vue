@@ -1,5 +1,3 @@
-<!-- src/views/doctor/QueueList.vue -->
-
 <template>
   <div class="queue-page">
     <div class="page-header">
@@ -52,15 +50,6 @@
         <div class="stat-info">
           <div class="stat-value waiting-value">{{ stats.waiting }}</div>
           <div class="stat-label">待就诊</div>
-        </div>
-      </div>
-      <div class="stat-card" :class="{ active: filterStatus === 'unpaid' }" @click="setFilter('unpaid')">
-        <div class="stat-icon unpaid">
-          <i class="fa-solid fa-credit-card"></i>
-        </div>
-        <div class="stat-info">
-          <div class="stat-value unpaid-value">{{ stats.unpaid }}</div>
-          <div class="stat-label">待支付</div>
         </div>
       </div>
       <div class="stat-card" :class="{ active: filterStatus === 'completed' }" @click="setFilter('completed')">
@@ -138,7 +127,7 @@
         <div
             class="tab-item"
             :class="{ active: activeTab === 'completed' }"
-            @click="activeTab = 'completed'; loadQueueList(2)"
+            @click="activeTab = 'completed'; loadCompletedList()"
         >
           <i class="fa-solid fa-check-circle"></i> 已完成就诊
           <span class="badge">{{ stats.completed || 0 }}</span>
@@ -146,7 +135,7 @@
         <div
             class="tab-item"
             :class="{ active: activeTab === 'cancelled' }"
-            @click="activeTab = 'cancelled'; loadQueueList(3)"
+            @click="activeTab = 'cancelled'; loadCancelledList()"
         >
           <i class="fa-solid fa-ban"></i> 已取消
           <span class="badge">{{ stats.cancelled || 0 }}</span>
@@ -154,7 +143,7 @@
       </div>
 
       <div class="queue-list" v-loading="loading">
-        <!-- 待就诊分组：按时段分组显示 -->
+        <!-- 待就诊分组：按时段分组显示，只显示已签到的人 -->
         <div v-if="activeTab === 'waiting' && groupedByTimeSlot.length > 0">
           <div
               v-for="group in groupedByTimeSlot"
@@ -204,7 +193,7 @@
                 </div>
                 <div class="action-buttons" @click.stop>
                   <el-button
-                      v-if="item.status === 1 && item.paid === 1"
+                      v-if="item.paid === 1"
                       type="primary"
                       size="small"
                       :loading="consultingId === item.appointmentId"
@@ -213,7 +202,7 @@
                     <i class="fa-solid fa-stethoscope"></i> 开始接诊
                   </el-button>
                   <el-button
-                      v-if="item.status === 1 && item.paid === 0"
+                      v-if="item.paid === 0"
                       type="warning"
                       size="small"
                       plain
@@ -222,7 +211,7 @@
                     <i class="fa-solid fa-bell"></i> 提醒支付
                   </el-button>
                   <el-button
-                      v-if="item.status === 1 && item.paid === 0"
+                      v-if="item.paid === 0"
                       type="danger"
                       size="small"
                       plain
@@ -237,12 +226,12 @@
         </div>
 
         <!-- 已完成就诊列表 -->
-        <div v-if="activeTab === 'completed' && queueList.length > 0" class="queue-group">
+        <div v-if="activeTab === 'completed' && completedList.length > 0" class="queue-group">
           <div class="group-title">
             <i class="fa-solid fa-check-circle"></i> 已完成就诊
           </div>
           <div
-              v-for="item in queueList"
+              v-for="item in completedList"
               :key="item.appointmentId"
               class="queue-card completed-card"
           >
@@ -273,12 +262,12 @@
         </div>
 
         <!-- 已取消列表 -->
-        <div v-if="activeTab === 'cancelled' && queueList.length > 0" class="queue-group">
+        <div v-if="activeTab === 'cancelled' && cancelledList.length > 0" class="queue-group">
           <div class="group-title cancelled">
             <i class="fa-solid fa-ban"></i> 已取消预约
           </div>
           <div
-              v-for="item in queueList"
+              v-for="item in cancelledList"
               :key="item.appointmentId"
               class="queue-card cancelled-card"
           >
@@ -303,7 +292,7 @@
           </div>
         </div>
 
-        <div v-if="queueList.length === 0 && !loading" class="empty-state">
+        <div v-if="isEmpty() && !loading" class="empty-state">
           <i class="fa-solid fa-folder-open"></i>
           <p>{{ getEmptyText() }}</p>
         </div>
@@ -353,7 +342,6 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getQueueList,
@@ -365,14 +353,14 @@ import {
   doctorCancelAppointment
 } from '@/api/admin'
 
-const router = useRouter()
 const loading = ref(false)
 const refreshing = ref(false)
-const queueList = ref([])
+const allAppointments = ref([])  // 存储所有预约数据
+const completedList = ref([])
+const cancelledList = ref([])
 const stats = ref({
   total: 0,
   waiting: 0,
-  unpaid: 0,
   completed: 0,
   cancelled: 0
 })
@@ -406,24 +394,21 @@ const timeSlotOrder = [
   '17:00-18:00'
 ]
 
-// 计算属性
-const waitingCount = computed(() => stats.value.waiting + stats.value.unpaid)
-
-// 待就诊列表（按时段分组）
-const paidQueue = computed(() => {
-  return queueList.value.filter(item => item.status === 1 && item.paid === 1)
+// 计算属性 - 只显示已签到的人（有排队号）
+const checkedInList = computed(() => {
+  return allAppointments.value.filter(item =>
+      item.status === 1 &&
+      item.paid === 1 &&
+      item.queueNo && item.queueNo > 0
+  )
 })
 
-const unpaidQueue = computed(() => {
-  return queueList.value.filter(item => item.status === 1 && item.paid === 0)
-})
+const waitingCount = computed(() => checkedInList.value.length)
 
 // 按时段分组的待就诊列表
 const groupedByTimeSlot = computed(() => {
-  const allWaiting = [...paidQueue.value, ...unpaidQueue.value]
-
   const groups = new Map()
-  for (const item of allWaiting) {
+  for (const item of checkedInList.value) {
     const slot = item.timeSlot || '其他时段'
     if (!groups.has(slot)) {
       groups.set(slot, [])
@@ -435,10 +420,7 @@ const groupedByTimeSlot = computed(() => {
   for (const slot of timeSlotOrder) {
     if (groups.has(slot)) {
       const items = groups.get(slot)
-      items.sort((a, b) => {
-        if (a.paid !== b.paid) return b.paid - a.paid
-        return (a.queueNo || 0) - (b.queueNo || 0)
-      })
+      items.sort((a, b) => (a.queueNo || 0) - (b.queueNo || 0))
       sortedGroups.push({
         timeSlot: slot,
         items: items
@@ -448,10 +430,7 @@ const groupedByTimeSlot = computed(() => {
   }
 
   for (const [slot, items] of groups) {
-    items.sort((a, b) => {
-      if (a.paid !== b.paid) return b.paid - a.paid
-      return (a.queueNo || 0) - (b.queueNo || 0)
-    })
+    items.sort((a, b) => (a.queueNo || 0) - (b.queueNo || 0))
     sortedGroups.push({
       timeSlot: slot,
       items: items
@@ -463,10 +442,17 @@ const groupedByTimeSlot = computed(() => {
 
 // 获取空状态提示文字
 const getEmptyText = () => {
-  if (activeTab.value === 'waiting') return '暂无待就诊患者'
+  if (activeTab.value === 'waiting') return '暂无已签到的待就诊患者'
   if (activeTab.value === 'completed') return '暂无已完成就诊记录'
   if (activeTab.value === 'cancelled') return '暂无已取消记录'
   return '暂无数据'
+}
+
+const isEmpty = () => {
+  if (activeTab.value === 'waiting') return checkedInList.value.length === 0
+  if (activeTab.value === 'completed') return completedList.value.length === 0
+  if (activeTab.value === 'cancelled') return cancelledList.value.length === 0
+  return true
 }
 
 // 加载可用日期
@@ -494,49 +480,62 @@ const setFilter = (type) => {
   if (type === 'waiting') {
     activeTab.value = 'waiting'
     loadQueueList()
-  } else if (type === 'unpaid') {
-    activeTab.value = 'waiting'
-    loadQueueList()
   } else if (type === 'completed') {
     activeTab.value = 'completed'
-    loadQueueList(2)
+    loadCompletedList()
   } else if (type === 'cancelled') {
     activeTab.value = 'cancelled'
-    loadQueueList(3)
+    loadCancelledList()
   } else {
     activeTab.value = 'waiting'
     loadQueueList()
   }
 }
 
-// 加载待诊队列
-const loadQueueList = async (status = null) => {
+// 加载所有预约数据
+const loadQueueList = async () => {
   loading.value = true
   try {
-    let queryStatus = null
-    if (activeTab.value === 'completed') {
-      queryStatus = 2
-    } else if (activeTab.value === 'cancelled') {
-      queryStatus = 3
-    } else if (status !== null) {
-      queryStatus = status
-    } else if (filterStatus.value === 'completed') {
-      queryStatus = 2
-    } else if (filterStatus.value === 'cancelled') {
-      queryStatus = 3
-    } else {
-      queryStatus = 1
-    }
-
     const res = await getQueueList({
-      status: queryStatus,
-      keyword: keyword.value || undefined,
+      status: 1,
       queryDate: currentDate.value
     })
-    queueList.value = res.data || res || []
+    allAppointments.value = res.data || res || []
   } catch (error) {
     console.error('加载队列失败:', error)
     ElMessage.error('加载队列失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载已完成列表
+const loadCompletedList = async () => {
+  loading.value = true
+  try {
+    const res = await getQueueList({
+      status: 2,
+      queryDate: currentDate.value
+    })
+    completedList.value = res.data || res || []
+  } catch (error) {
+    console.error('加载已完成列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载已取消列表
+const loadCancelledList = async () => {
+  loading.value = true
+  try {
+    const res = await getQueueList({
+      status: 3,
+      queryDate: currentDate.value
+    })
+    cancelledList.value = res.data || res || []
+  } catch (error) {
+    console.error('加载已取消列表失败:', error)
   } finally {
     loading.value = false
   }
@@ -547,6 +546,8 @@ const loadStats = async () => {
   try {
     const res = await getTodayStats(currentDate.value)
     stats.value = res.data || res || {}
+    // 覆盖 waiting 为实际已签到人数
+    stats.value.waiting = checkedInList.value.length
   } catch (error) {
     console.error('加载统计失败:', error)
   }
@@ -555,7 +556,7 @@ const loadStats = async () => {
 // 刷新数据
 const refreshData = async () => {
   refreshing.value = true
-  await Promise.all([loadQueueList(), loadStats(), loadCurrentCalling()])
+  await Promise.all([loadQueueList(), loadCompletedList(), loadCancelledList(), loadStats(), loadCurrentCalling()])
   refreshing.value = false
   ElMessage.success('刷新成功')
 }
@@ -575,11 +576,11 @@ const loadCurrentCalling = async () => {
   }
 }
 
-// 获取最小排队号的患者（优先叫号）
+// 获取最小排队号的患者
 const getSmallestQueuePatient = () => {
-  if (paidQueue.value.length === 0) return null
-  return paidQueue.value.reduce((min, current) =>
-      (current.queueNo < min.queueNo) ? current : min, paidQueue.value[0])
+  if (checkedInList.value.length === 0) return null
+  return checkedInList.value.reduce((min, current) =>
+      (current.queueNo < min.queueNo) ? current : min, checkedInList.value[0])
 }
 
 // 自动叫号
@@ -606,7 +607,7 @@ const autoCallNext = async () => {
       nextWaiting.value = data.nextWaiting || null
       waitingQueueCount.value = data.waitingCount || 0
     }
-    await loadQueueList()
+    await refreshData()
   } catch (error) {
     console.error('叫号失败:', error)
     ElMessage.error(error.message || '叫号失败')
@@ -695,7 +696,13 @@ let pollTimer = null
 const startPolling = () => {
   pollTimer = setInterval(() => {
     if (!consultDialogVisible.value && !autoCalling.value) {
-      loadQueueList()
+      if (activeTab.value === 'waiting') {
+        loadQueueList()
+      } else if (activeTab.value === 'completed') {
+        loadCompletedList()
+      } else if (activeTab.value === 'cancelled') {
+        loadCancelledList()
+      }
       loadStats()
       loadCurrentCalling()
     }
@@ -838,7 +845,7 @@ onUnmounted(() => {
 /* 统计卡片 */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -862,8 +869,9 @@ onUnmounted(() => {
 }
 
 .stat-card.active {
-  border-color: #8b6f47;
-  background: rgba(139, 90, 43, 0.08);
+  background: #ffffff;  /* 纯白背景 */
+  border-color: #f0e6d8;
+  box-shadow: 0 2px 12px rgba(139, 90, 43, 0.1);
 }
 
 .stat-icon {
@@ -885,11 +893,6 @@ onUnmounted(() => {
   color: #e8a54b;
 }
 
-.stat-icon.unpaid {
-  background: linear-gradient(135deg, #ffe8e0, #ffd8cc);
-  color: #e86a4b;
-}
-
 .stat-icon.completed {
   background: linear-gradient(135deg, #e8f0ff, #d4e4ff);
   color: #4b7ae8;
@@ -907,16 +910,12 @@ onUnmounted(() => {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #2c3e32;
+  color: #1a4a3a;
   line-height: 1.2;
 }
 
 .stat-value.waiting-value {
   color: #e8a54b;
-}
-
-.stat-value.unpaid-value {
-  color: #e86a4b;
 }
 
 .stat-label {
