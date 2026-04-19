@@ -66,9 +66,9 @@ const routes = [
         component: () => import('@/views/doctor/MySchedule.vue'),
         meta: { title: '我的排班' }
       },
-      { path: 'doctor/queue', component: Placeholder, meta: { title: '待诊队列' } },
-      { path: 'doctor/medical-record', component: Placeholder, meta: { title: '病历书写' } },
-      { path: 'doctor/prescription', component: Placeholder, meta: { title: '处方开立' } },
+      { path: 'doctor/queue', component: () => import('@/views/doctor/QueueList.vue'), meta: { title: '待诊队列' } },
+      { path: 'doctor/medical-record', component: () => import('@/views/doctor/MedicalRecordList.vue'), meta: { title: '病历书写' } },
+      { path: 'doctor/prescription', component: () => import('@/views/doctor/PrescriptionCreate.vue'), meta: { title: '处方开立' } },
       { path: 'patient/dashboard', component: Placeholder, meta: { title: '患者首页' } },
       { path: 'patient/appointment', component: () => import('@/views/admin/AppointmentBooking.vue'), meta: { title: '我要预约' } },
       { path: 'patient/my-appointment', component: () => import('@/views/patient/MyAppointmentList.vue'), meta: { title: '我的预约' } },
