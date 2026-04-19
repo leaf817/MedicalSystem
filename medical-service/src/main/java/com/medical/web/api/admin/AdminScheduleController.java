@@ -11,14 +11,19 @@ import com.medical.domain.entity.Appointment;
 import com.medical.domain.entity.Doctor;
 import com.medical.domain.entity.Schedule;
 import com.medical.domain.entity.SysDept;
+import com.medical.domain.entity.SysUser;
 import com.medical.domain.vo.ScheduleListVo;
 import com.medical.mapper.AppointmentMapper;
 import com.medical.mapper.DoctorMapper;
 import com.medical.mapper.ScheduleMapper;
 import com.medical.mapper.SysDeptMapper;
+import com.medical.mapper.SysUserMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +36,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin/schedule")
 @RequiredArgsConstructor
@@ -40,6 +46,52 @@ public class AdminScheduleController {
     private final DoctorMapper doctorMapper;
     private final SysDeptMapper sysDeptMapper;
     private final AppointmentMapper appointmentMapper;
+    private final SysUserMapper sysUserMapper;
+
+    /**
+     * 判断当前用户是否是管理员
+     */
+    private boolean isAdmin(SysUser user) {
+        // 方式1：根据用户名判断
+        if ("admin".equals(user.getUsername())) {
+            return true;
+        }
+        // 方式2：根据角色判断（如果有角色表，可以查询用户角色）
+        // 这里可以根据您的实际情况扩展
+        return false;
+    }
+
+    /**
+     * 获取当前登录用户
+     */
+    private SysUser getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new BusinessWarningException("请先登录");
+        }
+        String username = auth.getName();
+
+        SysUser user = sysUserMapper.selectOne(
+                new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, username)
+        );
+        if (user == null) {
+            throw new BusinessWarningException("用户不存在");
+        }
+        return user;
+    }
+
+    /**
+     * 获取当前登录医生的医生ID（仅医生角色使用）
+     */
+    private Long getCurrentDoctorId(SysUser user) {
+        Doctor doctor = doctorMapper.selectOne(
+                new LambdaQueryWrapper<Doctor>().eq(Doctor::getUserId, user.getUserId())
+        );
+        if (doctor == null) {
+            throw new BusinessWarningException("医生档案不存在");
+        }
+        return doctor.getDoctorId();
+    }
 
     @GetMapping("/list")
     public ResultVo<PageResult<ScheduleListVo>> list(
@@ -49,28 +101,60 @@ public class AdminScheduleController {
             @RequestParam(value = "doctorId", required = false) Long doctorId,
             @RequestParam(value = "date", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
             @RequestParam(value = "status", required = false) Integer status) {
+
+        // 获取当前登录用户
+        SysUser currentUser = getCurrentUser();
+        boolean isAdmin = isAdmin(currentUser);
+
+        log.info("当前用户: {}, 是否管理员: {}", currentUser.getUsername(), isAdmin);
+
         LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<>();
+
+        if (isAdmin) {
+            // 管理员：可以查询所有排班
+            log.info("管理员 {} 查询排班", currentUser.getUsername());
+
+            // 如果前端传入了doctorId，则按医生筛选
+            if (doctorId != null) {
+                wrapper.eq(Schedule::getDoctorId, doctorId);
+            }
+        } else {
+            // 非管理员（医生）：只能查询自己的排班
+            log.info("医生 {} 查询自己的排班", currentUser.getUsername());
+
+            Long currentDoctorId = getCurrentDoctorId(currentUser);
+            wrapper.eq(Schedule::getDoctorId, currentDoctorId);
+        }
+
+        // 科室筛选
         if (deptId != null) {
             wrapper.eq(Schedule::getDeptId, deptId);
         }
-        if (doctorId != null) {
-            wrapper.eq(Schedule::getDoctorId, doctorId);
-        }
+
+        // 日期筛选
         if (date != null) {
             wrapper.eq(Schedule::getScheduleDate, date);
         }
+
+        // 状态筛选
         if (status != null) {
             wrapper.eq(Schedule::getStatus, status);
         }
+
+        // 排序
         wrapper.orderByDesc(Schedule::getScheduleDate)
                 .orderByAsc(Schedule::getTimeSlot)
                 .orderByAsc(Schedule::getScheduleId);
+
+        // 分页查询
         Page<Schedule> page = scheduleMapper.selectPage(new Page<>(current, size), wrapper);
 
+        // 获取医生信息
         Set<Long> doctorIds = page.getRecords().stream()
                 .map(Schedule::getDoctorId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+
         Map<Long, Doctor> doctorMap = new HashMap<>();
         if (!doctorIds.isEmpty()) {
             for (Doctor d : doctorMapper.selectBatchIds(doctorIds)) {
@@ -79,10 +163,13 @@ public class AdminScheduleController {
                 }
             }
         }
+
+        // 获取科室信息
         Set<Long> deptIds = page.getRecords().stream()
                 .map(Schedule::getDeptId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+
         Map<Long, String> deptNameMap = new HashMap<>();
         if (!deptIds.isEmpty()) {
             for (SysDept d : sysDeptMapper.selectBatchIds(deptIds)) {
@@ -92,24 +179,29 @@ public class AdminScheduleController {
             }
         }
 
+        // 转换为VO
         List<ScheduleListVo> list = page.getRecords().stream().map(s -> {
             ScheduleListVo vo = new ScheduleListVo();
             vo.setScheduleId(s.getScheduleId());
             vo.setDoctorId(s.getDoctorId());
             vo.setDeptId(s.getDeptId());
             vo.setDeptName(s.getDeptId() != null ? deptNameMap.get(s.getDeptId()) : null);
+
             Doctor doctor = doctorMap.get(s.getDoctorId());
             if (doctor != null) {
                 vo.setDoctorName(doctor.getName());
                 vo.setDoctorTitle(doctor.getTitle());
             }
+
             vo.setScheduleDate(s.getScheduleDate());
             vo.setScheduleTimeSlot(s.getTimeSlot());
             vo.setTotalSlots(s.getTotalSlots());
             vo.setBookedSlots(s.getBookedSlots());
+
             int totalSlots = s.getTotalSlots() != null ? s.getTotalSlots() : 0;
             int bookedSlots = s.getBookedSlots() != null ? s.getBookedSlots() : 0;
             vo.setRemainingSlots(Math.max(0, totalSlots - bookedSlots));
+
             vo.setStatus(s.getStatus());
             vo.setStatusText(s.getStatus() != null && s.getStatus() == 1 ? "可预约" : "停诊");
             vo.setRemark(s.getRemark());
@@ -122,6 +214,7 @@ public class AdminScheduleController {
         result.setPageSize(page.getSize());
         result.setTotal(page.getTotal());
         result.setList(list);
+
         return ResultVo.ok(result);
     }
 

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.medical.mapper.ScheduleMapper">
+
+    <!-- 分页查询排班列表（含医生姓名、科室名称） -->
+    <select id="selectSchedulePage" resultType="com.medical.domain.vo.ScheduleListVo">
+        SELECT
+        s.schedule_id,
+        s.doctor_id,
+        d.name AS doctor_name,
+        s.dept_id,
+        dept.name AS dept_name,
+        s.schedule_date,
+        s.time_slot,
+        s.total_slots,
+        s.booked_slots,
+        (s.total_slots - s.booked_slots) AS remaining_slots,
+        s.status,
+        CASE
+        WHEN s.status = 1 THEN '可预约'
+        ELSE '停诊'
+        END AS status_text,
+        s.created_time
+        FROM schedule s
+        LEFT JOIN doctor d ON s.doctor_id = d.doctor_id
+        LEFT JOIN sys_dept dept ON s.dept_id = dept.dept_id
+        <where>
+            <if test="param.deptId != null">
+                AND s.dept_id = #{param.deptId}
+            </if>
+            <if test="param.doctorId != null">
+                AND s.doctor_id = #{param.doctorId}
+            </if>
+            <if test="param.status != null">
+                AND s.status = #{param.status}
+            </if>
+            <if test="param.startDate != null and param.startDate != ''">
+                AND s.schedule_date >= #{param.startDate}
+            </if>
+            <if test="param.endDate != null and param.endDate != ''">
+                AND s.schedule_date &lt;= #{param.endDate}
+            </if>
+        </where>
+        ORDER BY s.schedule_date DESC, s.created_time DESC
+    </select>
+
+    <!-- 检查排班冲突 -->
+    <select id="checkConflict" resultType="int">
+        SELECT COUNT(*)
+        FROM schedule
+        WHERE doctor_id = #{doctorId}
+        AND schedule_date = #{scheduleDate}
+        AND time_slot = #{timeSlot}
+        <if test="excludeId != null">
+            AND schedule_id != #{excludeId}
+        </if>
+    </select>
+
+</mapper>

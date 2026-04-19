@@ -36,24 +36,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/role/list").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/admin/role/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/api/admin/manage/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/options").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/tree").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT")
-
-                        // ========== 医生端和患者端需要调用的接口（必须放在 /api/admin/** 之前） ==========
-                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN", "PATIENT")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/medicine/page").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/user/getPatientId/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/medicine/categories").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
-
-                        // ========== 其他 admin 接口 ==========
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/options").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/tree").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        // 给医生开放排班查询接口权限
+                        .requestMatchers(HttpMethod.GET, "/api/admin/schedule/list").hasAnyRole("ADMIN", "SUPER_ADMIN", "DOCTOR")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                         // ========== 各端接口 ==========
                         .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/nurse/**").hasAnyRole("NURSE", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/api/patient/**").hasRole("PATIENT")
+                        .requestMatchers("/api/patient/**").hasAnyRole("PATIENT", "DOCTOR")
                         .anyRequest().authenticated()
                 );
         return http.build();

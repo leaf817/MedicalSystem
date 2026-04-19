@@ -313,10 +313,10 @@ export function cancelAdminAppointment(id) {
   })
 }
 
-// ==================== 排班相关 ====================
+// ==================== 排班相关（患者端） ====================
 
 /**
- * 获取医生可预约日期
+ * 获取医生可预约日期（日历高亮用）
  */
 export function getAvailableDates(userId) {
   return request({
@@ -381,7 +381,6 @@ export function getAppointmentDetail(appointmentId) {
   })
 }
 
-
 /**
  * 支付预约
  */
@@ -402,240 +401,86 @@ export function checkInAppointment(appointmentId) {
   })
 }
 
-// ==================== 待诊队列（医生端） ====================
+// ==================== 医生端工作台 ====================
 
-/**
- * 获取待诊队列列表
- */
-export function getQueueList(params) {
+export function getDoctorStatistics() {
   return request({
-    url: '/doctor/queue/list',
+    url: '/api/doctor/statistics',
+    method: 'get'
+  })
+}
+
+export function getTodayQueue(params) {
+  return request({
+    url: '/api/doctor/queue/today',
     method: 'get',
     params
   })
 }
 
-/**
- * 开始接诊
- */
-export function startConsultation(appointmentId) {
+// ==================== 医生端病历管理 ====================
+
+export function saveMedicalRecord(data) {
   return request({
-    url: `/doctor/queue/${appointmentId}/start`,
-    method: 'put'
-  })
-}
-
-/**
- * 完成就诊
- */
-export function completeConsultation(appointmentId) {
-  return request({
-    url: `/doctor/queue/${appointmentId}/complete`,
-    method: 'put'
-  })
-}
-
-/**
- * 叫号
- */
-export function callNext(appointmentId) {
-  return request({
-    url: `/doctor/queue/${appointmentId}/call`,
-    method: 'put'
-  })
-}
-
-/**
- * 获取当前叫号信息
- */
-export function getCurrentCalling(queryDate) {
-  return request({
-    url: '/doctor/queue/current-calling',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-/**
- * 获取医生统计
- */
-export function getTodayStats(queryDate) {
-  return request({
-    url: '/doctor/queue/stats',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-/**
- * 获取可用日期
- */
-export function getAvailableQueueDates() {
-  return request({
-    url: '/doctor/queue/available-dates',
-    method: 'get'
-  })
-}
-
-/**
- * 医生取消预约
- */
-export function doctorCancelAppointment(appointmentId) {
-  return request({
-    url: `/doctor/queue/cancel/${appointmentId}`,
-    method: 'put'
-  })
-}
-
-/**
- * 重新排序队列
- */
-export function resortQueue() {
-  return request({
-    url: '/doctor/queue/resort',
-    method: 'put'
-  })
-}
-
-// ==================== 排队叫号相关 ====================
-
-/**
- * 获取排队信息（包括排队列表）
- * @param {string} queryDate - 查询日期
- */
-export function getQueueInfo(queryDate) {
-  return request({
-    url: '/doctor/queue/queue-info',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-// ==================== 医生端处方 ====================
-
-/**
- * 开立处方
- */
-export function createPrescription(data) {
-  return request({
-    url: '/doctor/prescription',
+    url: '/api/doctor/medical-record/save',
     method: 'post',
     data
   })
 }
 
-/**
- * 更新处方
- */
-export function updatePrescription(id, data) {
+export function getMedicalRecordDetail(recordId) {
   return request({
-    url: `/doctor/prescription/${id}`,
-    method: 'put',
+    url: `/api/doctor/medical-record/${recordId}`,
+    method: 'get'
+  })
+}
+
+export function getPatientMedicalRecords(patientId) {
+  return request({
+    url: `/api/doctor/medical-record/patient/${patientId}`,
+    method: 'get'
+  })
+}
+
+// ==================== 医生端处方管理 ====================
+
+export function submitPrescription(data) {
+  return request({
+    url: '/api/doctor/prescription/submit',
+    method: 'post',
     data
   })
 }
 
-/**
- * 删除处方
- */
-export function deletePrescription(id) {
+export function getPrescriptionDetail(prescriptionId) {
   return request({
-    url: `/doctor/prescription/${id}`,
-    method: 'delete'
-  })
-}
-
-/**
- * 获取处方详情
- */
-export function getPrescriptionDetail(id) {
-  return request({
-    url: `/doctor/prescription/${id}`,
+    url: `/api/doctor/prescription/${prescriptionId}`,
     method: 'get'
   })
 }
 
-/**
- * 获取病历下的处方列表
- */
-export function getPrescriptionsByRecord(recordId) {
+// ==================== 医生端接诊管理 ====================
+
+export function startConsultation(appointmentId) {
   return request({
-    url: `/doctor/prescription/record/${recordId}`,
-    method: 'get'
+    url: '/api/doctor/consultation/start',
+    method: 'post',
+    params: { appointmentId }
   })
 }
 
-/**
- * 获取患者的处方列表
- */
-export function getPrescriptionsByPatient(patientId) {
+export function endConsultation(appointmentId) {
   return request({
-    url: `/doctor/prescription/patient/${patientId}`,
-    method: 'get'
+    url: '/api/doctor/consultation/end',
+    method: 'post',
+    params: { appointmentId }
   })
 }
 
-/**
- * 获取当前医生的处方列表
- */
-export function getMyPrescriptions(params) {
+export function callNextPatient(appointmentId) {
   return request({
-    url: '/doctor/prescription/my',
-    method: 'get',
-    params
-  })
-}
-
-// ==================== 药房端处方 ====================
-
-/**
- * 待发药列表
- */
-export function getPendingPrescriptions(keyword) {
-  return request({
-    url: '/nurse/prescription/pending',
-    method: 'get',
-    params: { keyword }
-  })
-}
-
-/**
- * 已发药列表
- */
-export function getDispensedPrescriptions(keyword) {
-  return request({
-    url: '/nurse/prescription/dispensed',
-    method: 'get',
-    params: { keyword }
-  })
-}
-
-/**
- * 发药确认
- */
-export function dispensePrescription(id) {
-  return request({
-    url: `/nurse/prescription/${id}/dispense`,
-    method: 'put'
-  })
-}
-
-/**
- * 药房端获取处方详情
- */
-export function getNursePrescriptionDetail(id) {
-  return request({
-    url: `/nurse/prescription/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 根据病历ID获取病历详情
- */
-export function getMedicalRecordById(recordId) {
-  return request({
-    url: `/doctor/medical-record/${recordId}`,
-    method: 'get'
+    url: '/api/doctor/queue/call',
+    method: 'post',
+    params: { appointmentId }
   })
 }
