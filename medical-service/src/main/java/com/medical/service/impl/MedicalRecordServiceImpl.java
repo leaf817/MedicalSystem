@@ -4,6 +4,7 @@ package com.medical.service.impl;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.medical.common.exception.BusinessWarningException;
 import com.medical.domain.dto.MedicalRecordSaveDto;
 import com.medical.domain.entity.Doctor;
 import com.medical.domain.entity.MedicalRecord;
@@ -90,6 +91,9 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
             // 更新
             record = medicalRecordMapper.selectById(dto.getRecordId());
             if (record != null) {
+                if (!doctorId.equals(record.getDoctorId())) {
+                    throw new BusinessWarningException("只能修改自己的病历");
+                }
                 BeanUtils.copyProperties(dto, record);
                 record.setUpdatedBy(doctorName);
                 record.setUpdatedTime(LocalDateTime.now());
