@@ -17,6 +17,7 @@ import com.medical.mapper.AppointmentMapper;
 import com.medical.mapper.DoctorMapper;
 import com.medical.mapper.ScheduleMapper;
 import com.medical.mapper.SysDeptMapper;
+import com.medical.mapper.SysRoleMapper;
 import com.medical.mapper.SysUserMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,18 +48,18 @@ public class AdminScheduleController {
     private final SysDeptMapper sysDeptMapper;
     private final AppointmentMapper appointmentMapper;
     private final SysUserMapper sysUserMapper;
+    private final SysRoleMapper sysRoleMapper;
 
     /**
      * 判断当前用户是否是管理员
      */
     private boolean isAdmin(SysUser user) {
-        // 方式1：根据用户名判断
-        if ("admin".equals(user.getUsername())) {
-            return true;
+        if (user == null || user.getUserId() == null) {
+            return false;
         }
-        // 方式2：根据角色判断（如果有角色表，可以查询用户角色）
-        // 这里可以根据您的实际情况扩展
-        return false;
+        List<String> roleCodes = sysRoleMapper.selectRoleCodesByUserId(user.getUserId());
+        return roleCodes != null && roleCodes.stream()
+                .anyMatch(code -> "ADMIN".equals(code) || "SUPER_ADMIN".equals(code));
     }
 
     /**
