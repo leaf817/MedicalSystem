@@ -12,10 +12,13 @@ public interface PrescriptionService {
     PrescriptionVo updatePrescription(Long id, PrescriptionUpdateDto dto, Long doctorId);
 
     PrescriptionVo getPrescriptionDetail(Long id);
+    PrescriptionVo getPrescriptionDetailForDoctor(Long id, Long doctorId);
 
     List<PrescriptionVo> getPrescriptionsByRecordId(Long recordId);
+    List<PrescriptionVo> getPrescriptionsByRecordIdForDoctor(Long recordId, Long doctorId);
 
     List<PrescriptionVo> getPrescriptionsByPatientId(Long patientId);
+    List<PrescriptionVo> getPrescriptionsByPatientIdForDoctor(Long patientId, Long doctorId);
 
     void deletePrescription(Long id, Long doctorId);
 

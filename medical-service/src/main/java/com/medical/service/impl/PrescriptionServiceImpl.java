@@ -198,6 +198,16 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     }
 
     @Override
+    public PrescriptionVo getPrescriptionDetailForDoctor(Long id, Long doctorId) {
+        Prescription prescription = prescriptionMapper.selectById(id);
+        if (prescription == null) {
+            throw new ServiceException("处方不存在");
+        }
+        ensureDoctorReadable(prescription, doctorId);
+        return getPrescriptionDetail(id);
+    }
+
+    @Override
     public List<PrescriptionVo> getPrescriptionsByRecordId(Long recordId) {
         List<Prescription> prescriptions = prescriptionMapper.selectList(
                 new LambdaQueryWrapper<Prescription>()
@@ -205,6 +215,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                         .orderByDesc(Prescription::getCreatedTime));
         return prescriptions.stream()
                 .map(p -> getPrescriptionDetail(p.getPrescriptionId()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PrescriptionVo> getPrescriptionsByRecordIdForDoctor(Long recordId, Long doctorId) {
+        List<PrescriptionVo> list = getPrescriptionsByRecordId(recordId);
+        return list.stream()
+                .filter(vo -> canDoctorReadPatient(vo.getPatientId(), doctorId) || doctorId.equals(vo.getDoctorId()))
                 .collect(Collectors.toList());
     }
 
@@ -217,6 +235,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         return prescriptions.stream()
                 .map(p -> getPrescriptionDetail(p.getPrescriptionId()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PrescriptionVo> getPrescriptionsByPatientIdForDoctor(Long patientId, Long doctorId) {
+        if (!canDoctorReadPatient(patientId, doctorId)) {
+            return List.of();
+        }
+        return getPrescriptionsByPatientId(patientId);
     }
 
     @Override
@@ -304,6 +330,30 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                     "，当前库存: " + medicine.getStockQuantity());
         }
         return medicine;
+    }
+
+    /**
+     * 会诊可读策略：
+     * 1) 本人开具的处方可读；
+     * 2) 该医生曾接诊过该患者（存在病历）时可读该患者处方。
+     */
+    private void ensureDoctorReadable(Prescription prescription, Long doctorId) {
+        if (doctorId.equals(prescription.getDoctorId())) {
+            return;
+        }
+        if (!canDoctorReadPatient(prescription.getPatientId(), doctorId)) {
+            throw new BusinessWarningException("无权查看该处方");
+        }
+    }
+
+    private boolean canDoctorReadPatient(Long patientId, Long doctorId) {
+        if (patientId == null || doctorId == null) {
+            return false;
+        }
+        LambdaQueryWrapper<MedicalRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MedicalRecord::getPatientId, patientId)
+                .eq(MedicalRecord::getDoctorId, doctorId);
+        return medicalRecordMapper.selectCount(wrapper) > 0;
     }
 
     private static PrescriptionDetail toDetailEntity(Medicine medicine, int quantity, String dosage, String remark) {

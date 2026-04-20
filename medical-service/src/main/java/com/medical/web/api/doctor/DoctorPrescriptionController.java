@@ -95,22 +95,25 @@ public class DoctorPrescriptionController {
 
     @Operation(summary = "获取处方详情")
     @GetMapping("/{id}")
-    public ResultVo<PrescriptionVo> detail(@PathVariable Long id) {
-        PrescriptionVo vo = prescriptionService.getPrescriptionDetail(id);
+    public ResultVo<PrescriptionVo> detail(@PathVariable Long id, Authentication authentication) {
+        Long doctorId = getCurrentDoctorId(authentication);
+        PrescriptionVo vo = prescriptionService.getPrescriptionDetailForDoctor(id, doctorId);
         return ResultVo.ok(vo);
     }
 
     @Operation(summary = "获取病历下的处方列表")
     @GetMapping("/record/{recordId}")
-    public ResultVo<List<PrescriptionVo>> listByRecord(@PathVariable Long recordId) {
-        List<PrescriptionVo> list = prescriptionService.getPrescriptionsByRecordId(recordId);
+    public ResultVo<List<PrescriptionVo>> listByRecord(@PathVariable Long recordId, Authentication authentication) {
+        Long doctorId = getCurrentDoctorId(authentication);
+        List<PrescriptionVo> list = prescriptionService.getPrescriptionsByRecordIdForDoctor(recordId, doctorId);
         return ResultVo.ok(list);
     }
 
     @Operation(summary = "获取患者的处方列表")
     @GetMapping("/patient/{patientId}")
-    public ResultVo<List<PrescriptionVo>> listByPatient(@PathVariable Long patientId) {
-        List<PrescriptionVo> list = prescriptionService.getPrescriptionsByPatientId(patientId);
+    public ResultVo<List<PrescriptionVo>> listByPatient(@PathVariable Long patientId, Authentication authentication) {
+        Long doctorId = getCurrentDoctorId(authentication);
+        List<PrescriptionVo> list = prescriptionService.getPrescriptionsByPatientIdForDoctor(patientId, doctorId);
         return ResultVo.ok(list);
     }
 
