@@ -62,14 +62,25 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑排班' : '新增排班'" width="520px" @close="resetForm">
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top">
+      <el-radio-group v-if="!isEdit" v-model="dialogMode" style="margin-bottom: 12px">
+        <el-radio-button label="single">单条新增</el-radio-button>
+        <el-radio-button label="batch">一键排班</el-radio-button>
+      </el-radio-group>
+
+      <el-form v-if="isEdit || dialogMode === 'single'" ref="formRef" :model="form" :rules="rules" label-position="top">
         <el-form-item label="医生" prop="doctorId">
           <el-select v-model="form.doctorId" filterable style="width: 100%">
             <el-option v-for="d in doctorOptions" :key="d.doctorId" :label="`${d.name || d.username} (${d.username})`" :value="d.doctorId" />
           </el-select>
         </el-form-item>
         <el-form-item label="日期" prop="scheduleDate">
-          <el-date-picker v-model="form.scheduleDate" type="date" value-format="YYYY-MM-DD" style="width: 100%" />
+          <el-date-picker
+            v-model="form.scheduleDate"
+            type="date"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+            :disabled-date="disabledPastDate"
+          />
         </el-form-item>
         <el-form-item label="时段" prop="timeSlot">
           <el-select v-model="form.timeSlot" style="width: 100%">
@@ -89,9 +100,71 @@
           <el-input v-model="form.remark" type="textarea" :rows="2" maxlength="500" show-word-limit />
         </el-form-item>
       </el-form>
+
+        <el-form v-else ref="batchFormRef" :model="batchForm" :rules="batchRules" label-position="top">
+          <el-form-item label="科室（可多选）" prop="deptIds">
+          <el-select v-model="batchForm.deptIds" filterable clearable multiple collapse-tags style="width: 100%" @change="loadDialogDoctors">
+            <el-option v-for="d in deptOptions" :key="d.deptId" :label="d.name" :value="d.deptId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="医生（可多选）" prop="doctorIds">
+          <el-select v-model="batchForm.doctorIds" filterable multiple collapse-tags style="width: 100%">
+            <el-option
+              v-for="d in dialogDoctorOptions"
+              :key="d.doctorId"
+              :label="`${d.name || d.username} (${d.username})`"
+              :value="d.doctorId"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="日期范围" required>
+          <el-col :span="11">
+            <el-form-item prop="startDate">
+              <el-date-picker
+                v-model="batchForm.startDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+                placeholder="开始日期"
+                :disabled-date="disabledPastDate"
+              />
+            </el-form-item>
+          </el-col>
+          <el-col :span="2" style="text-align: center; color: #909399">至</el-col>
+          <el-col :span="11">
+            <el-form-item prop="endDate">
+              <el-date-picker
+                v-model="batchForm.endDate"
+                type="date"
+                value-format="YYYY-MM-DD"
+                style="width: 100%"
+                placeholder="结束日期"
+                :disabled-date="disabledPastDate"
+              />
+            </el-form-item>
+          </el-col>
+        </el-form-item>
+        <el-form-item label="时段（可多选）" prop="timeSlots">
+          <el-select v-model="batchForm.timeSlots" multiple collapse-tags style="width: 100%">
+            <el-option v-for="slot in timeSlotOptions" :key="slot" :label="slot" :value="slot" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="总号源" prop="totalSlots">
+          <el-input-number v-model="batchForm.totalSlots" :min="1" :max="999" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="batchForm.status" style="width: 100%">
+            <el-option :value="1" label="可预约" />
+            <el-option :value="0" label="停诊" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="batchForm.remark" type="textarea" :rows="2" maxlength="500" show-word-limit />
+        </el-form-item>
+      </el-form>
       <template #footer>
         <el-button class="btn-cancel" @click="dialogVisible = false">取消</el-button>
-        <el-button class="btn-save" :loading="saving" @click="submitForm">保存</el-button>
+        <el-button class="btn-save" :loading="saving" @click="submitForm">{{ isEdit || dialogMode === 'single' ? '保存' : '一键排班' }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -105,6 +178,7 @@ import {
   getDoctorPage,
   getScheduleList,
   createSchedule,
+  createScheduleBatch,
   updateSchedule,
   deleteSchedule,
   disableExpiredSchedules
@@ -128,11 +202,24 @@ const doctorOptions = ref([])
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const editingId = ref(null)
+const dialogMode = ref('single')
 const formRef = ref(null)
+const batchFormRef = ref(null)
+const dialogDoctorOptions = ref([])
 const form = reactive({
   doctorId: null,
   scheduleDate: '',
   timeSlot: '08:00-09:00',
+  totalSlots: 20,
+  status: 1,
+  remark: ''
+})
+const batchForm = reactive({
+  deptIds: [],
+  doctorIds: [],
+  startDate: '',
+  endDate: '',
+  timeSlots: ['08:00-09:00'],
   totalSlots: 20,
   status: 1,
   remark: ''
@@ -148,10 +235,23 @@ const headerCellStyle = {
   borderBottom: '1px solid rgba(139, 90, 43, 0.15)'
 }
 
+const todayStart = new Date()
+todayStart.setHours(0, 0, 0, 0)
+const disabledPastDate = (date) => date.getTime() < todayStart.getTime()
+
 const rules = {
   doctorId: [{ required: true, message: '请选择医生', trigger: 'change' }],
   scheduleDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
   timeSlot: [{ required: true, message: '请选择时段', trigger: 'change' }],
+  totalSlots: [{ required: true, message: '请输入总号源', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+}
+const batchRules = {
+  deptIds: [{ required: true, message: '请选择至少一个科室', trigger: 'change' }],
+  doctorIds: [{ required: true, message: '请选择至少一个医生', trigger: 'change' }],
+  startDate: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
+  endDate: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
+  timeSlots: [{ required: true, message: '请选择至少一个时段', trigger: 'change' }],
   totalSlots: [{ required: true, message: '请输入总号源', trigger: 'change' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
@@ -169,6 +269,23 @@ const loadDoctors = async () => {
     deptId: deptId.value ?? undefined
   })
   doctorOptions.value = res?.list || []
+}
+
+const loadDialogDoctors = async () => {
+  const res = await getDoctorPage({
+    current: 1,
+    size: 200,
+    status: 1
+  })
+  const all = res?.list || []
+  if (batchForm.deptIds.length > 0) {
+    dialogDoctorOptions.value = all.filter(d => batchForm.deptIds.includes(d.deptId))
+  } else {
+    dialogDoctorOptions.value = all
+  }
+  batchForm.doctorIds = batchForm.doctorIds.filter(id =>
+    dialogDoctorOptions.value.some(d => d.doctorId === id)
+  )
 }
 
 const loadData = async () => {
@@ -199,6 +316,7 @@ const handleDeptChange = async () => {
 const openCreate = () => {
   isEdit.value = false
   editingId.value = null
+  dialogMode.value = 'single'
   resetForm()
   dialogVisible.value = true
 }
@@ -222,31 +340,60 @@ const resetForm = () => {
   form.totalSlots = 20
   form.status = 1
   form.remark = ''
+  batchForm.deptIds = []
+  batchForm.doctorIds = []
+  batchForm.startDate = ''
+  batchForm.endDate = ''
+  batchForm.timeSlots = ['08:00-09:00']
+  batchForm.totalSlots = 20
+  batchForm.status = 1
+  batchForm.remark = ''
+  dialogDoctorOptions.value = []
   formRef.value?.resetFields()
+  batchFormRef.value?.resetFields()
 }
 
 const submitForm = async () => {
-  try {
-    await formRef.value?.validate()
-  } catch {
-    return
-  }
   saving.value = true
   try {
-    const payload = {
-      doctorId: form.doctorId,
-      scheduleDate: form.scheduleDate,
-      timeSlot: form.timeSlot,
-      totalSlots: form.totalSlots,
-      status: form.status,
-      remark: form.remark || undefined
-    }
-    if (isEdit.value && editingId.value) {
-      await updateSchedule(editingId.value, payload)
-      ElMessage.success('更新成功')
+    if (isEdit.value || dialogMode.value === 'single') {
+      try {
+        await formRef.value?.validate()
+      } catch {
+        return
+      }
+      const payload = {
+        doctorId: form.doctorId,
+        scheduleDate: form.scheduleDate,
+        timeSlot: form.timeSlot,
+        totalSlots: form.totalSlots,
+        status: form.status,
+        remark: form.remark || undefined
+      }
+      if (isEdit.value && editingId.value) {
+        await updateSchedule(editingId.value, payload)
+        ElMessage.success('更新成功')
+      } else {
+        await createSchedule(payload)
+        ElMessage.success('创建成功')
+      }
     } else {
-      await createSchedule(payload)
-      ElMessage.success('创建成功')
+      try {
+        await batchFormRef.value?.validate()
+      } catch {
+        return
+      }
+      const res = await createScheduleBatch({
+        deptIds: batchForm.deptIds,
+        doctorIds: batchForm.doctorIds,
+        startDate: batchForm.startDate,
+        endDate: batchForm.endDate,
+        timeSlots: batchForm.timeSlots,
+        totalSlots: batchForm.totalSlots,
+        status: batchForm.status,
+        remark: batchForm.remark || undefined
+      })
+      ElMessage.success(`一键排班完成：新增 ${res?.createdCount ?? 0} 条，跳过 ${res?.skippedCount ?? 0} 条`)
     }
     dialogVisible.value = false
     loadData()

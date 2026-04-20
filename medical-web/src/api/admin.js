@@ -277,6 +277,15 @@ export function createSchedule(data) {
   })
 }
 
+/** 一键批量排班 */
+export function createScheduleBatch(data) {
+  return request({
+    url: '/admin/schedule/batch',
+    method: 'post',
+    data
+  })
+}
+
 /** 更新排班 */
 export function updateSchedule(id, data) {
   return request({

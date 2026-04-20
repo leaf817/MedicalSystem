@@ -6,6 +6,7 @@ import com.medical.common.exception.BusinessWarningException;
 import com.medical.common.exception.ServiceException;
 import com.medical.common.pagination.PageResult;
 import com.medical.common.response.ResultVo;
+import com.medical.domain.dto.ScheduleBatchCreateDto;
 import com.medical.domain.dto.ScheduleSaveDto;
 import com.medical.domain.entity.Appointment;
 import com.medical.domain.entity.Doctor;
@@ -32,7 +33,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -246,6 +250,105 @@ public class AdminScheduleController {
         s.setUpdatedTime(now);
         scheduleMapper.insert(s);
         return ResultVo.ok();
+    }
+
+    /**
+     * 一键排班：按日期区间和时段批量生成，已存在的排班自动跳过
+     */
+    @PostMapping("/batch")
+    public ResultVo<Map<String, Object>> batchCreate(@Valid @RequestBody ScheduleBatchCreateDto dto) {
+        if (dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new BusinessWarningException("结束日期不能早于开始日期");
+        }
+        long days = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
+        if (days > 60) {
+            throw new BusinessWarningException("日期区间不能超过60天");
+        }
+
+        Set<String> slotSet = new LinkedHashSet<>();
+        for (String slot : dto.getTimeSlots()) {
+            if (StringUtils.hasText(slot)) {
+                slotSet.add(slot.trim());
+            }
+        }
+        if (slotSet.isEmpty()) {
+            throw new BusinessWarningException("至少选择一个有效时段");
+        }
+
+        List<Long> doctorIds = dto.getDoctorIds().stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (doctorIds.isEmpty()) {
+            throw new BusinessWarningException("至少选择一个医生");
+        }
+
+        List<Doctor> doctors = doctorMapper.selectBatchIds(doctorIds);
+        Map<Long, Doctor> doctorMap = doctors.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Doctor::getDoctorId, d -> d));
+        if (doctorMap.size() != doctorIds.size()) {
+            throw new BusinessWarningException("存在无效医生，请刷新后重试");
+        }
+
+        Set<Long> deptLimit = dto.getDeptIds() == null ? Set.of() :
+                dto.getDeptIds().stream().filter(Objects::nonNull).collect(Collectors.toSet());
+
+        for (Long doctorId : doctorIds) {
+            Doctor doctor = doctorMap.get(doctorId);
+            if (doctor.getStatus() == null || doctor.getStatus() != 1) {
+                throw new BusinessWarningException("存在已停用医生，无法一键排班");
+            }
+            if (doctor.getDeptId() == null) {
+                throw new BusinessWarningException("存在未绑定科室医生，无法一键排班");
+            }
+            if (!deptLimit.isEmpty() && !deptLimit.contains(doctor.getDeptId())) {
+                throw new BusinessWarningException("所选医生不在所选科室范围内，请检查后重试");
+            }
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        int createdCount = 0;
+        int skippedCount = 0;
+        List<String> createdItems = new ArrayList<>();
+
+        for (Long doctorId : doctorIds) {
+            Doctor doctor = doctorMap.get(doctorId);
+            for (LocalDate date = dto.getStartDate(); !date.isAfter(dto.getEndDate()); date = date.plusDays(1)) {
+                for (String slot : slotSet) {
+                    long exists = scheduleMapper.selectCount(new LambdaQueryWrapper<Schedule>()
+                            .eq(Schedule::getDoctorId, doctorId)
+                            .eq(Schedule::getScheduleDate, date)
+                            .eq(Schedule::getTimeSlot, slot));
+                    if (exists > 0) {
+                        skippedCount++;
+                        continue;
+                    }
+
+                    Schedule s = new Schedule();
+                    s.setDoctorId(doctorId);
+                    s.setDeptId(doctor.getDeptId());
+                    s.setScheduleDate(date);
+                    s.setTimeSlot(slot);
+                    s.setTotalSlots(dto.getTotalSlots());
+                    s.setBookedSlots(0);
+                    s.setStatus(dto.getStatus());
+                    s.setRemark(StringUtils.hasText(dto.getRemark()) ? dto.getRemark().trim() : null);
+                    s.setCreatedTime(now);
+                    s.setUpdatedTime(now);
+                    scheduleMapper.insert(s);
+
+                    createdCount++;
+                    createdItems.add(doctor.getName() + " " + date + " " + slot);
+                }
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("createdCount", createdCount);
+        result.put("skippedCount", skippedCount);
+        result.put("createdItems", createdItems);
+        return ResultVo.ok(result);
     }
 
     @PutMapping("/{id}")
