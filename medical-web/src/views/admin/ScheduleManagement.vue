@@ -68,9 +68,14 @@
       </el-radio-group>
 
       <el-form v-if="isEdit || dialogMode === 'single'" ref="formRef" :model="form" :rules="rules" label-position="top">
+        <el-form-item label="科室" prop="deptId">
+          <el-select v-model="form.deptId" filterable clearable style="width: 100%" @change="loadSingleDoctors">
+            <el-option v-for="d in deptOptions" :key="d.deptId" :label="d.name" :value="d.deptId" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="医生" prop="doctorId">
           <el-select v-model="form.doctorId" filterable style="width: 100%">
-            <el-option v-for="d in doctorOptions" :key="d.doctorId" :label="`${d.name || d.username} (${d.username})`" :value="d.doctorId" />
+            <el-option v-for="d in singleDoctorOptions" :key="d.doctorId" :label="`${d.name || d.username} (${d.username})`" :value="d.doctorId" />
           </el-select>
         </el-form-item>
         <el-form-item label="日期" prop="scheduleDate">
@@ -206,7 +211,9 @@ const dialogMode = ref('single')
 const formRef = ref(null)
 const batchFormRef = ref(null)
 const dialogDoctorOptions = ref([])
+const singleDoctorOptions = ref([])
 const form = reactive({
+  deptId: null,
   doctorId: null,
   scheduleDate: '',
   timeSlot: '08:00-09:00',
@@ -240,6 +247,7 @@ todayStart.setHours(0, 0, 0, 0)
 const disabledPastDate = (date) => date.getTime() < todayStart.getTime()
 
 const rules = {
+  deptId: [{ required: true, message: '请选择科室', trigger: 'change' }],
   doctorId: [{ required: true, message: '请选择医生', trigger: 'change' }],
   scheduleDate: [{ required: true, message: '请选择日期', trigger: 'change' }],
   timeSlot: [{ required: true, message: '请选择时段', trigger: 'change' }],
@@ -269,6 +277,19 @@ const loadDoctors = async () => {
     deptId: deptId.value ?? undefined
   })
   doctorOptions.value = res?.list || []
+}
+
+const loadSingleDoctors = async () => {
+  const res = await getDoctorPage({
+    current: 1,
+    size: 200,
+    status: 1,
+    deptId: form.deptId ?? undefined
+  })
+  singleDoctorOptions.value = res?.list || []
+  if (!singleDoctorOptions.value.some(d => d.doctorId === form.doctorId)) {
+    form.doctorId = null
+  }
 }
 
 const loadDialogDoctors = async () => {
@@ -318,12 +339,15 @@ const openCreate = () => {
   editingId.value = null
   dialogMode.value = 'single'
   resetForm()
+  loadSingleDoctors()
   dialogVisible.value = true
 }
 
-const openEdit = (row) => {
+const openEdit = async (row) => {
   isEdit.value = true
   editingId.value = row.scheduleId
+  form.deptId = row.deptId
+  await loadSingleDoctors()
   form.doctorId = row.doctorId
   form.scheduleDate = row.scheduleDate
   form.timeSlot = row.scheduleTimeSlot
@@ -334,6 +358,7 @@ const openEdit = (row) => {
 }
 
 const resetForm = () => {
+  form.deptId = null
   form.doctorId = null
   form.scheduleDate = ''
   form.timeSlot = '08:00-09:00'
@@ -349,6 +374,7 @@ const resetForm = () => {
   batchForm.status = 1
   batchForm.remark = ''
   dialogDoctorOptions.value = []
+  singleDoctorOptions.value = []
   formRef.value?.resetFields()
   batchFormRef.value?.resetFields()
 }
