@@ -208,6 +208,17 @@ public class AdminAppointmentController {
         return ResultVo.ok();
     }
 
+    /**
+     * 手动处理过期待就诊预约（改为爽约并释放号源）
+     */
+    @PutMapping("/expire-overdue")
+    public ResultVo<Map<String, Integer>> expireOverdueAppointments() {
+        int processedCount = scheduleService.expireOverdueAppointments();
+        Map<String, Integer> result = new HashMap<>();
+        result.put("processedCount", processedCount);
+        return ResultVo.ok(result);
+    }
+
     private AppointmentVo toVo(Appointment a,
                                Map<Long, Doctor> doctorMap,
                                Map<Long, Patient> patientMap,

@@ -35,6 +35,7 @@
           <el-option :value="3" label="已取消" />
           <el-option :value="4" label="爽约" />
         </el-select>
+        <el-button @click="handleExpireOverdue">处理过期预约</el-button>
       </div>
 
       <el-table :data="tableData" v-loading="loading" class="data-table" :header-cell-style="headerCellStyle">
@@ -120,7 +121,8 @@ import {
   getAdminAppointmentPage,
   getDeptOptions,
   getDoctorPage,
-  checkInAppointment
+  checkInAppointment,
+  expireOverdueAppointments
 } from '@/api/admin'
 
 const loading = ref(false)
@@ -268,6 +270,22 @@ const checkinRow = async (row) => {
   } catch (error) {
     ElMessage.error(error.message || '签到失败')
   }
+}
+
+const handleExpireOverdue = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将把所有“过期待就诊”的预约转为爽约并释放号源，是否继续？',
+      '操作确认',
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  const res = await expireOverdueAppointments()
+  const processed = res?.processedCount ?? 0
+  ElMessage.success(`处理完成，共转爽约 ${processed} 条`)
+  loadData()
 }
 
 onMounted(async () => {

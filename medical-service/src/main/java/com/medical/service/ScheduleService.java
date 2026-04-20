@@ -117,6 +117,15 @@ public class ScheduleService {
     @Scheduled(cron = "0 0 2 * * ?") // 每天凌晨2点执行
     @Transactional
     public void autoExpireAppointments() {
+        expireOverdueAppointments();
+    }
+
+    /**
+     * 处理过期待就诊预约：改为爽约并释放号源
+     * @return 实际处理的预约数量
+     */
+    @Transactional
+    public int expireOverdueAppointments() {
         // 查询所有 status=1（待就诊）且 appointmentDate < 当前日期 的预约
         LambdaQueryWrapper<Appointment> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Appointment::getStatus, 1)
@@ -130,6 +139,7 @@ public class ScheduleService {
             // 释放号源
             releaseSlot(a.getScheduleId());
         }
+        return expiredList.size();
     }
 
 }

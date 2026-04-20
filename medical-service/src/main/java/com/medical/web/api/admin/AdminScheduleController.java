@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -295,6 +297,77 @@ public class AdminScheduleController {
         }
         scheduleMapper.deleteById(id);
         return ResultVo.ok();
+    }
+
+    /**
+     * 一键停用：已过期且无有效预约（待就诊/已就诊）的排班
+     */
+    @PutMapping("/disable-expired")
+    public ResultVo<Map<String, Integer>> disableExpiredSchedules() {
+        LocalDate today = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+
+        List<Schedule> candidates = scheduleMapper.selectList(
+                new LambdaQueryWrapper<Schedule>()
+                        .eq(Schedule::getStatus, 1)
+                        .le(Schedule::getScheduleDate, today)
+        );
+
+        int disabledCount = 0;
+        int skippedWithAppointments = 0;
+
+        for (Schedule schedule : candidates) {
+            if (!isExpired(schedule, today, nowTime)) {
+                continue;
+            }
+            long activeAppointments = appointmentMapper.selectCount(
+                    new LambdaQueryWrapper<Appointment>()
+                            .eq(Appointment::getScheduleId, schedule.getScheduleId())
+                            .in(Appointment::getStatus, List.of(1, 2))
+            );
+            if (activeAppointments > 0) {
+                skippedWithAppointments++;
+                continue;
+            }
+            schedule.setStatus(0);
+            schedule.setUpdatedTime(LocalDateTime.now());
+            scheduleMapper.updateById(schedule);
+            disabledCount++;
+        }
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("disabledCount", disabledCount);
+        result.put("skippedWithAppointments", skippedWithAppointments);
+        return ResultVo.ok(result);
+    }
+
+    private boolean isExpired(Schedule schedule, LocalDate today, LocalTime nowTime) {
+        if (schedule.getScheduleDate() == null) {
+            return false;
+        }
+        if (schedule.getScheduleDate().isBefore(today)) {
+            return true;
+        }
+        if (!schedule.getScheduleDate().isEqual(today)) {
+            return false;
+        }
+        LocalTime endTime = extractEndTime(schedule.getTimeSlot());
+        return endTime != null && !endTime.isAfter(nowTime);
+    }
+
+    private LocalTime extractEndTime(String timeSlot) {
+        if (!StringUtils.hasText(timeSlot) || !timeSlot.contains("-")) {
+            return null;
+        }
+        String[] parts = timeSlot.trim().split("-");
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            return LocalTime.parse(parts[1].trim());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     private void validateUnique(Long doctorId, LocalDate date, String timeSlot, Long ignoreId) {

@@ -23,6 +23,7 @@
           <el-option :value="1" label="可预约" />
           <el-option :value="0" label="停诊" />
         </el-select>
+        <el-button @click="handleDisableExpired">停用过期排班</el-button>
         <el-button class="add-btn" @click="openCreate">新增排班</el-button>
       </div>
 
@@ -105,7 +106,8 @@ import {
   getScheduleList,
   createSchedule,
   updateSchedule,
-  deleteSchedule
+  deleteSchedule,
+  disableExpiredSchedules
 } from '@/api/admin'
 
 const loading = ref(false)
@@ -263,6 +265,23 @@ const removeRow = async (row) => {
   }
   await deleteSchedule(row.scheduleId)
   ElMessage.success('删除成功')
+  loadData()
+}
+
+const handleDisableExpired = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '将停用“已过期且无待就诊/已就诊预约”的排班，是否继续？',
+      '操作确认',
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  const res = await disableExpiredSchedules()
+  const disabledCount = res?.disabledCount ?? 0
+  const skippedCount = res?.skippedWithAppointments ?? 0
+  ElMessage.success(`已停用 ${disabledCount} 条，因存在有效预约跳过 ${skippedCount} 条`)
   loadData()
 }
 

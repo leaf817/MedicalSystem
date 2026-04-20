@@ -294,6 +294,14 @@ export function deleteSchedule(id) {
   })
 }
 
+/** 一键停用过期且无有效预约的排班 */
+export function disableExpiredSchedules() {
+  return request({
+    url: '/admin/schedule/disable-expired',
+    method: 'put'
+  })
+}
+
 // ==================== 管理端预约 ====================
 
 /** 预约分页 */
@@ -317,6 +325,14 @@ export function getAdminAppointmentDetail(id) {
 export function cancelAdminAppointment(id) {
   return request({
     url: `/admin/appointment/${id}/cancel`,
+    method: 'put'
+  })
+}
+
+/** 手动处理过期待就诊预约（转爽约） */
+export function expireOverdueAppointments() {
+  return request({
+    url: '/admin/appointment/expire-overdue',
     method: 'put'
   })
 }
