@@ -16,11 +16,13 @@ public interface MedicalRecordService {
      * 获取患者历史病历
      */
     List<MedicalRecordVo> getPatientHistory(Long patientId);
+    List<MedicalRecordVo> getPatientHistoryForDoctor(Long patientId, Long doctorId);
 
     /**
      * 获取病历详情
      */
     MedicalRecordVo getRecordDetail(Long recordId);
+    MedicalRecordVo getRecordDetailForDoctor(Long recordId, Long doctorId);
 
     /**
      * 保存病历

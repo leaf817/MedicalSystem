@@ -57,10 +57,30 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     }
 
     @Override
+    public List<MedicalRecordVo> getPatientHistoryForDoctor(Long patientId, Long doctorId) {
+        if (!canDoctorReadPatient(patientId, doctorId)) {
+            throw new BusinessWarningException("无权查看该患者病历");
+        }
+        return getPatientHistory(patientId);
+    }
+
+    @Override
     public MedicalRecordVo getRecordDetail(Long recordId) {
         MedicalRecord record = medicalRecordMapper.selectById(recordId);
         if (record == null) {
             return null;
+        }
+        return buildMedicalRecordVo(record);
+    }
+
+    @Override
+    public MedicalRecordVo getRecordDetailForDoctor(Long recordId, Long doctorId) {
+        MedicalRecord record = medicalRecordMapper.selectById(recordId);
+        if (record == null) {
+            return null;
+        }
+        if (!doctorId.equals(record.getDoctorId()) && !canDoctorReadPatient(record.getPatientId(), doctorId)) {
+            throw new BusinessWarningException("无权查看该病历");
         }
         return buildMedicalRecordVo(record);
     }
@@ -90,15 +110,16 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         } else {
             // 更新
             record = medicalRecordMapper.selectById(dto.getRecordId());
-            if (record != null) {
-                if (!doctorId.equals(record.getDoctorId())) {
-                    throw new BusinessWarningException("只能修改自己的病历");
-                }
-                BeanUtils.copyProperties(dto, record);
-                record.setUpdatedBy(doctorName);
-                record.setUpdatedTime(LocalDateTime.now());
-                medicalRecordMapper.updateById(record);
+            if (record == null) {
+                throw new BusinessWarningException("病历不存在");
             }
+            if (!doctorId.equals(record.getDoctorId())) {
+                throw new BusinessWarningException("只能修改自己的病历");
+            }
+            BeanUtils.copyProperties(dto, record);
+            record.setUpdatedBy(doctorName);
+            record.setUpdatedTime(LocalDateTime.now());
+            medicalRecordMapper.updateById(record);
         }
 
         return buildMedicalRecordVo(record);
@@ -111,6 +132,16 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         wrapper.eq(MedicalRecord::getRecordId, recordId)
                 .eq(MedicalRecord::getDoctorId, doctorId);
         return medicalRecordMapper.delete(wrapper) > 0;
+    }
+
+    private boolean canDoctorReadPatient(Long patientId, Long doctorId) {
+        if (patientId == null || doctorId == null) {
+            return false;
+        }
+        LambdaQueryWrapper<MedicalRecord> wrapper = Wrappers.lambdaQuery();
+        wrapper.eq(MedicalRecord::getPatientId, patientId)
+                .eq(MedicalRecord::getDoctorId, doctorId);
+        return medicalRecordMapper.selectCount(wrapper) > 0;
     }
 
     /**

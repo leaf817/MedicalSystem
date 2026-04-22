@@ -51,7 +51,11 @@ public class DoctorMedicalRecordController {
     @Operation(summary = "根据患者ID获取病历列表")
     @GetMapping("/patient/{patientId}")
     public ResultVo<List<MedicalRecordVo>> getPatientHistory(@PathVariable Long patientId) {
-        List<MedicalRecordVo> records = medicalRecordService.getPatientHistory(patientId);
+        Long doctorId = getCurrentDoctorId();
+        if (doctorId == null) {
+            return ResultVo.ok(null);
+        }
+        List<MedicalRecordVo> records = medicalRecordService.getPatientHistoryForDoctor(patientId, doctorId);
         return ResultVo.ok(records);
     }
 
@@ -62,7 +66,11 @@ public class DoctorMedicalRecordController {
     @Operation(summary = "根据病历ID获取病历详情")
     @GetMapping("/{recordId}")
     public ResultVo<MedicalRecordVo> getRecordDetail(@PathVariable Long recordId) {
-        return ResultVo.ok(medicalRecordService.getRecordDetail(recordId));
+        Long doctorId = getCurrentDoctorId();
+        if (doctorId == null) {
+            return ResultVo.ok(null);
+        }
+        return ResultVo.ok(medicalRecordService.getRecordDetailForDoctor(recordId, doctorId));
     }
 
     /**
