@@ -80,8 +80,8 @@ const routes = [
       { path: 'reception/payment', component: Placeholder, meta: { title: '收费' } },
       { path: 'reception/refund', component: Placeholder, meta: { title: '退费' } },
       { path: 'nurse/dashboard', component: Placeholder, meta: { title: '护士工作台' } },
-      { path: 'nurse/prescription', component: Placeholder, meta: { title: '待发药' } },
-      { path: 'nurse/dispense', component: Placeholder, meta: { title: '发药确认' } },
+      { path: 'nurse/prescription', component: () => import('@/views/nurse/NursePrescriptionPending.vue'), meta: { title: '待发药' } },
+      { path: 'nurse/dispense', component: () => import('@/views/nurse/NurseDispenseList.vue'), meta: { title: '发药确认' } },
       { path: 'nurse/inventory', component: Placeholder, meta: { title: '药品盘点' } }
     ]
   }
