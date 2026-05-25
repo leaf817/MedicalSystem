@@ -74,11 +74,31 @@ const routes = [
       { path: 'patient/my-appointment', component: () => import('@/views/patient/MyAppointmentList.vue'), meta: { title: '我的预约' } },
       { path: 'patient/medical-record', component: Placeholder, meta: { title: '我的病历' } },
       { path: 'patient/prescription', component: Placeholder, meta: { title: '我的处方' } },
-      { path: 'reception/dashboard', component: Placeholder, meta: { title: '挂号工作台' } },
-      { path: 'reception/appointment', component: Placeholder, meta: { title: '预约挂号' } },
-      { path: 'reception/patient-register', component: Placeholder, meta: { title: '患者建档' } },
-      { path: 'reception/payment', component: Placeholder, meta: { title: '收费' } },
-      { path: 'reception/refund', component: Placeholder, meta: { title: '退费' } },
+      {
+        path: 'reception/dashboard',
+        component: () => import('@/views/reception/ReceptionDashboard.vue'),
+        meta: { title: '挂号工作台' }
+      },
+      {
+        path: 'reception/appointment',
+        component: () => import('@/views/reception/ReceptionAppointment.vue'),
+        meta: { title: '预约挂号' }
+      },
+      {
+        path: 'reception/patient-register',
+        component: () => import('@/views/reception/PatientRegister.vue'),
+        meta: { title: '患者建档' }
+      },
+      {
+        path: 'reception/payment',
+        component: () => import('@/views/reception/Payment.vue'),
+        meta: { title: '收费' }
+      },
+      {
+        path: 'reception/refund',
+        component: () => import('@/views/reception/Refund.vue'),
+        meta: { title: '退费' }
+      },
       { path: 'nurse/dashboard', component: Placeholder, meta: { title: '护士工作台' } },
       { path: 'nurse/prescription', component: () => import('@/views/nurse/NursePrescriptionPending.vue'), meta: { title: '待发药' } },
       { path: 'nurse/dispense', component: () => import('@/views/nurse/NurseDispenseList.vue'), meta: { title: '发药确认' } },

@@ -41,12 +41,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/manage/**").hasRole("SUPER_ADMIN")
 
                         // ========== 科室接口（多端共用） ==========
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/options").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/tree").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
-                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/options").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR", "RECEPTIONIST")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/tree").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR", "RECEPTIONIST")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/dept/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR", "RECEPTIONIST")
 
                         // ========== 用户/医生/药品查询（多端共用） ==========
-                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/user/page").hasAnyRole("ADMIN", "SUPER_ADMIN", "PATIENT", "DOCTOR", "RECEPTIONIST")
                         .requestMatchers(HttpMethod.GET, "/api/admin/user/getPatientId/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/admin/medicine/page").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/admin/medicine/categories").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
@@ -61,7 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/api/nurse/**").hasAnyRole("NURSE", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/api/patient/**").hasAnyRole("PATIENT", "DOCTOR")
+                        .requestMatchers("/api/patient/**").hasAnyRole("PATIENT", "DOCTOR", "RECEPTIONIST")
 
                         // 其他所有请求需要认证
                         .anyRequest().authenticated()

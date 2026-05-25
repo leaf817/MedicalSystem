@@ -13,6 +13,8 @@ import com.medical.mapper.DoctorMapper;
 import com.medical.mapper.PatientMapper;
 import com.medical.mapper.SysDeptMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,10 @@ public class AppointmentService {
     private final PatientMapper patientMapper;
     private final SysDeptMapper sysDeptMapper;
     private final ScheduleService scheduleService;
+
+    @Autowired
+    @Lazy
+    private PaymentService paymentService;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -262,8 +268,76 @@ public class AppointmentService {
         appointment.setUpdatedTime(LocalDateTime.now());
         appointmentMapper.updateById(appointment);
 
+        paymentService.recordPatientSelfPay(appointmentId, patientId);
+
         // 支付后重新分配排队号（已支付的优先）
         reassignAllQueueNumbers(appointment.getDoctorId(), appointment.getAppointmentDate());
+    }
+
+    /**
+     * 收费/退费后刷新排队顺序（供 PaymentService 调用）
+     */
+    public void reassignQueueAfterPayment(Long doctorId, LocalDate date) {
+        if (doctorId == null || date == null) {
+            return;
+        }
+        reassignAllQueueNumbers(doctorId, date);
+    }
+
+    /**
+     * 前台取消预约（不校验患者归属）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelAppointmentByStaff(Long appointmentId) {
+        Appointment appointment = appointmentMapper.selectById(appointmentId);
+        if (appointment == null) {
+            throw new BusinessWarningException("预约记录不存在");
+        }
+        if (appointment.getStatus() != 1) {
+            throw new BusinessWarningException("当前状态无法取消");
+        }
+        appointment.setStatus(3);
+        appointment.setUpdatedTime(LocalDateTime.now());
+        appointmentMapper.updateById(appointment);
+        scheduleService.releaseSlot(appointment.getScheduleId());
+        reassignAllQueueNumbers(appointment.getDoctorId(), appointment.getAppointmentDate());
+    }
+
+    /**
+     * 前台签到
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void checkinByStaff(Long appointmentId) {
+        Appointment a = appointmentMapper.selectById(appointmentId);
+        if (a == null) {
+            throw new BusinessWarningException("预约记录不存在");
+        }
+        if (a.getStatus() != 1) {
+            throw new BusinessWarningException("只有待就诊状态的预约可以签到");
+        }
+        if (a.getPaid() == null || a.getPaid() != 1) {
+            throw new BusinessWarningException("请先支付挂号费");
+        }
+        if (a.getQueueNo() != null && a.getQueueNo() > 0 && a.getCheckInTime() != null) {
+            throw new BusinessWarningException("该预约已完成签到，排队号为：" + a.getQueueNo());
+        }
+
+        Integer maxQueueNo = appointmentMapper.selectList(
+                new LambdaQueryWrapper<Appointment>()
+                        .eq(Appointment::getDoctorId, a.getDoctorId())
+                        .eq(Appointment::getAppointmentDate, a.getAppointmentDate())
+                        .eq(Appointment::getTimeSlot, a.getTimeSlot())
+                        .eq(Appointment::getStatus, 1)
+                        .isNotNull(Appointment::getQueueNo)
+                        .orderByDesc(Appointment::getQueueNo)
+                        .last("limit 1")
+        ).stream().map(Appointment::getQueueNo).filter(Objects::nonNull).max(Integer::compareTo).orElse(0);
+
+        int newQueueNo = maxQueueNo + 1;
+        a.setQueueNo(newQueueNo);
+        a.setCheckInTime(LocalDateTime.now());
+        a.setUpdatedTime(LocalDateTime.now());
+        appointmentMapper.updateById(a);
     }
 
     /**

@@ -4,8 +4,10 @@
       <div class="header-left">
         <i class="fa-solid fa-calendar-check page-icon"></i>
         <div>
-          <h2 class="page-title">预约挂号</h2>
-          <p class="page-desc">选择科室和医生，在线预约门诊服务</p>
+          <h2 class="page-title">{{ isReception ? '现场挂号' : '预约挂号' }}</h2>
+          <p class="page-desc">
+            {{ isReception ? `为 ${patientName || '患者'} 选择科室与医生，完成代挂预约` : '选择科室和医生，在线预约门诊服务' }}
+          </p>
         </div>
       </div>
     </div>
@@ -237,8 +239,9 @@
           <p>请按时到院就诊</p>
         </div>
         <div class="success-actions">
-          <el-button class="btn-view" @click="viewMyAppointments">查看我的预约</el-button>
-          <el-button class="btn-continue" @click="resetAndContinue">继续预约</el-button>
+          <el-button v-if="!isReception" class="btn-view" @click="viewMyAppointments">查看我的预约</el-button>
+          <el-button v-if="isReception" class="btn-view" @click="goReceptionCharge">立即收费</el-button>
+          <el-button class="btn-continue" @click="resetAndContinue">{{ isReception ? '继续挂号' : '继续预约' }}</el-button>
         </div>
       </div>
     </el-dialog>
@@ -250,8 +253,27 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDeptOptions, getUserPage, getAvailableDates, getScheduleSlots, createAppointment } from '@/api/admin'
+import { createReceptionAppointment } from '@/api/reception'
+
+const props = defineProps({
+  mode: {
+    type: String,
+    default: 'patient'
+  },
+  patientId: {
+    type: [Number, String],
+    default: null
+  },
+  patientName: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['booked'])
 
 const router = useRouter()
+const isReception = computed(() => props.mode === 'reception')
 
 // 步骤控制
 const currentStep = ref(1)
@@ -280,6 +302,7 @@ const scheduleLoading = ref(false)
 const submitting = ref(false)
 const successVisible = ref(false)
 const appointmentNo = ref('')
+const lastBookedAppointmentId = ref(null)
 
 // 星期映射
 const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -516,19 +539,45 @@ const goNextStep = () => {
 
 // 提交预约
 const submitAppointment = async () => {
+  if (isReception.value && !props.patientId) {
+    ElMessage.warning('请先选择患者')
+    return
+  }
   submitting.value = true
   try {
-    const res = await createAppointment({
-      scheduleId: selectedScheduleId.value,
-    })
-
-    appointmentNo.value = res.data?.appointmentNo || res || 'APT' + Date.now()
+    let res
+    if (isReception.value) {
+      res = await createReceptionAppointment({
+        patientId: Number(props.patientId),
+        scheduleId: selectedScheduleId.value
+      })
+      appointmentNo.value = res?.appointmentNo || 'APT' + Date.now()
+      lastBookedAppointmentId.value = res?.appointmentId
+    } else {
+      res = await createAppointment({
+        scheduleId: selectedScheduleId.value
+      })
+      appointmentNo.value = res?.appointmentNo || res || 'APT' + Date.now()
+    }
     successVisible.value = true
+    emit('booked', { appointmentNo: appointmentNo.value })
   } catch (error) {
     console.error('预约失败:', error)
     ElMessage.error(error.message || '预约失败，请稍后重试')
   } finally {
     submitting.value = false
+  }
+}
+
+const goReceptionCharge = () => {
+  successVisible.value = false
+  if (lastBookedAppointmentId.value) {
+    router.push({
+      path: '/reception/payment',
+      query: { bizType: 'APPOINTMENT', bizId: lastBookedAppointmentId.value }
+    })
+  } else {
+    router.push('/reception/payment')
   }
 }
 
@@ -546,6 +595,7 @@ const resetAndContinue = () => {
 
 // 重置表单
 const resetForm = () => {
+  lastBookedAppointmentId.value = null
   currentStep.value = 1
   selectedDept.value = null
   selectedDoctor.value = null
