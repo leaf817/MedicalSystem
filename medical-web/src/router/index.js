@@ -60,7 +60,11 @@ const routes = [
         component: () => import('@/views/admin/RoleManagement.vue'),
         meta: { title: '角色管理', requiresSuperAdmin: true }
       },
-      { path: 'user/password', component: Placeholder, meta: { title: '修改密码' } },
+      {
+        path: 'user/password',
+        component: () => import('@/views/user/ChangePassword.vue'),
+        meta: { title: '修改密码' }
+      },
       { path: 'doctor/dashboard', component: Placeholder, meta: { title: '医生工作台' } },
       {
         path: 'doctor/schedule',

@@ -96,6 +96,12 @@ export const doctorMenuItems = [
       { index: '2-1', label: '病历书写', icon: 'fa-solid fa-pen', url: '/doctor/medical-record' },
       { index: '2-2', label: '处方开立', icon: 'fa-solid fa-prescription', url: '/doctor/prescription' }
     ]
+  },
+  {
+    index: '3',
+    title: '用户中心',
+    icon: 'fa-solid fa-user-circle',
+    children: [{ index: '3-1', label: '修改密码', icon: 'fa-solid fa-key', url: '/user/password' }]
   }
 ]
 
@@ -117,7 +123,8 @@ export const patientMenuItems = [
     icon: 'fa-solid fa-user-circle',
     children: [
       { index: '2-1', label: '我的病历', icon: 'fa-solid fa-file-medical', url: '/patient/medical-record' },
-      { index: '2-2', label: '我的处方', icon: 'fa-solid fa-prescription', url: '/patient/prescription' }
+      { index: '2-2', label: '我的处方', icon: 'fa-solid fa-prescription', url: '/patient/prescription' },
+      { index: '2-3', label: '修改密码', icon: 'fa-solid fa-key', url: '/user/password' }
     ]
   }
 ]
