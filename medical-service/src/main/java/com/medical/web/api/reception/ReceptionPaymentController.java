@@ -8,7 +8,9 @@ import com.medical.domain.entity.Payment;
 import com.medical.domain.entity.SysUser;
 import com.medical.domain.vo.PaymentVo;
 import com.medical.mapper.SysUserMapper;
+import com.medical.domain.vo.PrescriptionVo;
 import com.medical.service.PaymentService;
+import com.medical.service.PrescriptionService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,16 +29,23 @@ import java.util.Map;
 public class ReceptionPaymentController {
 
     private final PaymentService paymentService;
+    private final PrescriptionService prescriptionService;
     private final SysUserMapper sysUserMapper;
+
+    @GetMapping("/unpaid-prescriptions")
+    public ResultVo<java.util.List<PrescriptionVo>> unpaidPrescriptions(
+            @RequestParam(value = "keyword", required = false) String keyword) {
+        return ResultVo.ok(prescriptionService.listPendingUnpaid(keyword));
+    }
 
     @PostMapping("/charge")
     public ResultVo<Map<String, Object>> charge(@Valid @RequestBody PaymentChargeDto dto) {
         Long operatorId = getCurrentUserId();
-        Payment payment = paymentService.charge(
+        Payment payment = paymentService.createPayment(
                 dto.getBizType(),
                 dto.getBizId(),
-                dto.getPayMethod(),
                 dto.getAmount(),
+                dto.getPayMethod(),
                 operatorId,
                 dto.getRemark());
         Map<String, Object> data = new LinkedHashMap<>();
@@ -49,7 +58,7 @@ public class ReceptionPaymentController {
     @PostMapping("/refund")
     public ResultVo<Map<String, Object>> refund(@Valid @RequestBody PaymentRefundDto dto) {
         Long operatorId = getCurrentUserId();
-        Payment payment = paymentService.refund(dto.getPaymentId(), operatorId, dto.getReason());
+        Payment payment = paymentService.refundPayment(dto.getPaymentId(), operatorId, dto.getReason());
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("paymentId", payment.getPaymentId());
         data.put("paymentNo", payment.getPaymentNo());

@@ -43,6 +43,33 @@ public class PaymentService {
     @Lazy
     private AppointmentService appointmentService;
 
+    /**
+     * 统一收费入口（写 payment 并同步业务单状态）
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Payment createPayment(String bizType, Long bizId, BigDecimal amount, String payMethod,
+                                 Long operatorId, String remark) {
+        return charge(bizType, bizId, payMethod, amount, operatorId, remark);
+    }
+
+    /**
+     * 统一退费入口
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Payment refundPayment(Long paymentId, Long operatorId, String reason) {
+        return refund(paymentId, operatorId, reason);
+    }
+
+    public boolean isBizPaid(String bizType, Long bizId) {
+        if (!StringUtils.hasText(bizType) || bizId == null) {
+            return false;
+        }
+        return paymentMapper.selectCount(new LambdaQueryWrapper<Payment>()
+                .eq(Payment::getBizType, bizType.trim().toUpperCase())
+                .eq(Payment::getBizId, bizId)
+                .eq(Payment::getStatus, 1)) > 0;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Payment charge(String bizType, Long bizId, String payMethod, BigDecimal amountOverride,
                           Long operatorId, String remark) {
@@ -99,8 +126,8 @@ public class PaymentService {
         if (prescription == null) {
             throw new BusinessWarningException("处方不存在");
         }
-        if (prescription.getStatus() != null && prescription.getStatus() == 3) {
-            throw new BusinessWarningException("已取消的处方无法收费");
+        if (prescription.getStatus() == null || prescription.getStatus() != 1) {
+            throw new BusinessWarningException("只有待发药状态的处方可以收费");
         }
         long existPaid = paymentMapper.selectCount(new LambdaQueryWrapper<Payment>()
                 .eq(Payment::getBizType, "PRESCRIPTION")
@@ -196,7 +223,18 @@ public class PaymentService {
         }
         if (StringUtils.hasText(keyword)) {
             String kw = keyword.trim();
-            wrapper.and(w -> w.like(Payment::getPaymentNo, kw).or().like(Payment::getRemark, kw));
+            List<Long> patientIds = patientMapper.selectList(
+                            new LambdaQueryWrapper<Patient>()
+                                    .like(Patient::getName, kw)
+                                    .or().like(Patient::getPhone, kw)
+                                    .or().like(Patient::getPatientNo, kw))
+                    .stream().map(Patient::getPatientId).filter(Objects::nonNull).distinct().toList();
+            wrapper.and(w -> {
+                w.like(Payment::getPaymentNo, kw).or().like(Payment::getRemark, kw);
+                if (!patientIds.isEmpty()) {
+                    w.or().in(Payment::getPatientId, patientIds);
+                }
+            });
         }
         wrapper.orderByDesc(Payment::getPayTime).orderByDesc(Payment::getPaymentId);
 
@@ -238,25 +276,6 @@ public class PaymentService {
                 .eq(Payment::getStatus, 2)
                 .ge(Payment::getUpdatedTime, today.atStartOfDay())
                 .lt(Payment::getUpdatedTime, today.plusDays(1).atStartOfDay()));
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public void recordPatientSelfPay(Long appointmentId, Long patientId) {
-        Appointment appointment = appointmentMapper.selectById(appointmentId);
-        if (appointment == null || !appointment.getPatientId().equals(patientId)) {
-            return;
-        }
-        long exist = paymentMapper.selectCount(new LambdaQueryWrapper<Payment>()
-                .eq(Payment::getBizType, "APPOINTMENT")
-                .eq(Payment::getBizId, appointmentId)
-                .eq(Payment::getStatus, 1));
-        if (exist > 0) {
-            return;
-        }
-        LocalDateTime now = LocalDateTime.now();
-        Payment payment = buildPayment(patientId, "APPOINTMENT", appointmentId,
-                appointment.getFeeAmount(), "ONLINE", null, "患者自助支付", now);
-        paymentMapper.insert(payment);
     }
 
     private Payment buildPayment(Long patientId, String bizType, Long bizId, BigDecimal amount,

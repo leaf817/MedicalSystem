@@ -41,7 +41,8 @@ export const adminMenuItems = [
     icon: 'fa-solid fa-calendar-days',
     children: [
       { index: '4-1', label: '排班管理', icon: 'fa-solid fa-calendar', url: '/admin/schedule' },
-      { index: '4-2', label: '预约管理', icon: 'fa-solid fa-clock', url: '/admin/appointment' }
+      { index: '4-2', label: '预约管理', icon: 'fa-solid fa-clock', url: '/admin/appointment' },
+      { index: '4-3', label: '收费查询', icon: 'fa-solid fa-receipt', url: '/admin/payment' }
     ]
   },
   {

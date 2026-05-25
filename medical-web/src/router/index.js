@@ -42,6 +42,7 @@ const routes = [
       },
       { path: 'admin/schedule', component: () => import('@/views/admin/ScheduleManagement.vue'), meta: { title: '排班管理' } },
       { path: 'admin/appointment', component: () => import('@/views/admin/AppointmentManagement.vue'), meta: { title: '预约管理' } },
+      { path: 'admin/payment', component: () => import('@/views/admin/PaymentManagement.vue'), meta: { title: '收费查询' } },
       { path: 'admin/medicine', component: () => import('@/views/admin/MedicineList.vue'), meta: { title: '药品列表' } },
       {
         path: 'admin/medicine-stock-warning',

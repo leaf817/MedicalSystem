@@ -98,3 +98,11 @@ export function getPaymentDetail(paymentId) {
     method: 'get'
   })
 }
+
+export function getUnpaidPrescriptions(keyword) {
+  return request({
+    url: '/reception/payment/unpaid-prescriptions',
+    method: 'get',
+    params: { keyword }
+  })
+}

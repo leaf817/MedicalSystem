@@ -11,6 +11,7 @@ import com.medical.domain.entity.*;
 import com.medical.domain.vo.PrescriptionDetailVo;
 import com.medical.domain.vo.PrescriptionVo;
 import com.medical.mapper.*;
+import com.medical.service.PaymentService;
 import com.medical.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final MedicalRecordMapper medicalRecordMapper;
     private final PatientMapper patientMapper;
     private final DoctorMapper doctorMapper;
+    private final PaymentService paymentService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -170,6 +172,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         vo.setTotalAmount(prescription.getTotalAmount());
         vo.setStatus(prescription.getStatus());
         vo.setStatusText(getStatusText(prescription.getStatus()));
+        vo.setPaid(paymentService.isBizPaid("PRESCRIPTION", id) ? 1 : 0);
         vo.setRemark(prescription.getRemark());
         vo.setCreatedTime(prescription.getCreatedTime());
         vo.setUpdatedTime(prescription.getUpdatedTime());
@@ -274,6 +277,9 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         if (prescription.getStatus() != 1) {
             throw new BusinessWarningException("处方状态不是待发药");
         }
+        if (!paymentService.isBizPaid("PRESCRIPTION", id)) {
+            throw new BusinessWarningException("处方未缴费，请先完成收费");
+        }
 
         // 检查库存并扣减
         List<PrescriptionDetail> details = prescriptionDetailMapper.selectList(
@@ -296,6 +302,13 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescription.setStatus(2); // 已发药
         prescription.setUpdatedTime(LocalDateTime.now());
         prescriptionMapper.updateById(prescription);
+    }
+
+    @Override
+    public List<PrescriptionVo> listPendingUnpaid(String keyword) {
+        return getPendingDispenseList(keyword, 1).stream()
+                .filter(vo -> vo.getPaid() == null || vo.getPaid() != 1)
+                .collect(Collectors.toList());
     }
 
     @Override

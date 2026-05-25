@@ -31,11 +31,23 @@
           <template #default="{ row }">¥{{ row.totalAmount ?? '-' }}</template>
         </el-table-column>
         <el-table-column prop="createdTime" label="开方时间" min-width="165" />
+        <el-table-column label="缴费" width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.paid === 1 ? 'success' : 'warning'" size="small">
+              {{ row.paid === 1 ? '已缴费' : '未缴费' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="statusText" label="状态" width="90" />
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">详情</el-button>
-            <el-button link type="success" @click="dispense(row)">确认发药</el-button>
+            <el-button
+              link
+              type="success"
+              :disabled="row.paid !== 1"
+              @click="dispense(row)"
+            >确认发药</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -47,6 +59,9 @@
         <el-descriptions-item label="患者">{{ detail.patientName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="开方医生">{{ detail.doctorName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="总金额">¥{{ detail.totalAmount ?? '-' }}</el-descriptions-item>
+        <el-descriptions-item label="缴费状态">
+          {{ detail.paid === 1 ? '已缴费' : '未缴费' }}
+        </el-descriptions-item>
         <el-descriptions-item label="状态">{{ detail.statusText || '-' }}</el-descriptions-item>
         <el-descriptions-item label="开方时间">{{ detail.createdTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="备注" :span="3">{{ detail.remark || '-' }}</el-descriptions-item>
@@ -102,6 +117,10 @@ const openDetail = async (row) => {
 }
 
 const dispense = async (row) => {
+  if (row.paid !== 1) {
+    ElMessage.warning('处方未缴费，请患者先到收费处缴费')
+    return
+  }
   try {
     await ElMessageBox.confirm(`确认处方「${row.prescriptionNo}」已完成发药？`, '发药确认', { type: 'warning' })
   } catch {

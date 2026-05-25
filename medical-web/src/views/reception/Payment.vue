@@ -13,20 +13,38 @@
     <el-row :gutter="16">
       <el-col :span="10">
         <div class="content-card">
-          <h3 class="card-title">待收费预约（今日）</h3>
-          <el-table
-            :data="unpaidList"
-            v-loading="unpaidLoading"
-            highlight-current-row
-            @current-change="selectAppointment"
-            max-height="420"
-          >
-            <el-table-column prop="appointmentNo" label="单号" min-width="140" />
-            <el-table-column prop="patientName" label="患者" width="80" />
-            <el-table-column label="费用" width="72">
-              <template #default="{ row }">¥{{ row.feeAmount }}</template>
-            </el-table-column>
-          </el-table>
+          <el-tabs v-model="pendingTab" @tab-change="onTabChange">
+            <el-tab-pane label="待收挂号费" name="appointment">
+              <el-table
+                :data="unpaidAppointments"
+                v-loading="unpaidLoading"
+                highlight-current-row
+                @current-change="selectAppointment"
+                max-height="380"
+              >
+                <el-table-column prop="appointmentNo" label="单号" min-width="130" />
+                <el-table-column prop="patientName" label="患者" width="80" />
+                <el-table-column label="费用" width="72">
+                  <template #default="{ row }">¥{{ row.feeAmount }}</template>
+                </el-table-column>
+              </el-table>
+            </el-tab-pane>
+            <el-tab-pane label="待收处方费" name="prescription">
+              <el-table
+                :data="unpaidPrescriptions"
+                v-loading="unpaidRxLoading"
+                highlight-current-row
+                @current-change="selectPrescription"
+                max-height="380"
+              >
+                <el-table-column prop="prescriptionNo" label="处方号" min-width="140" />
+                <el-table-column prop="patientName" label="患者" width="80" />
+                <el-table-column label="金额" width="72">
+                  <template #default="{ row }">¥{{ row.totalAmount }}</template>
+                </el-table-column>
+              </el-table>
+            </el-tab-pane>
+          </el-tabs>
         </div>
       </el-col>
       <el-col :span="14">
@@ -34,17 +52,19 @@
           <h3 class="card-title">收费办理</h3>
           <el-form :model="chargeForm" label-width="96px">
             <el-form-item label="业务类型">
-              <el-select v-model="chargeForm.bizType" style="width: 100%">
+              <el-select v-model="chargeForm.bizType" style="width: 100%" @change="onBizTypeChange">
                 <el-option label="挂号费" value="APPOINTMENT" />
-                <el-option label="处方费" value="PRESCRIPTION" disabled />
+                <el-option label="处方费" value="PRESCRIPTION" />
               </el-select>
             </el-form-item>
             <el-form-item label="业务单号">
-              <el-input v-model="chargeForm.bizId" placeholder="预约ID，或从左侧选择" />
+              <el-input v-model="chargeForm.bizId" placeholder="从左侧选择或手动输入 ID" />
             </el-form-item>
             <el-form-item label="收费金额">
               <el-input-number v-model="chargeForm.amount" :min="0" :precision="2" :step="1" style="width: 100%" />
-              <div class="hint" v-if="selectedRow">参考：¥{{ selectedRow.feeAmount }}</div>
+              <div class="hint" v-if="selectedRow">
+                参考：¥{{ selectedRow.feeAmount ?? selectedRow.totalAmount }}
+              </div>
             </el-form-item>
             <el-form-item label="支付方式">
               <el-radio-group v-model="chargeForm.payMethod">
@@ -92,13 +112,21 @@
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getReceptionAppointmentPage, chargePayment, getPaymentPage } from '@/api/reception'
+import {
+  getReceptionAppointmentPage,
+  chargePayment,
+  getPaymentPage,
+  getUnpaidPrescriptions
+} from '@/api/reception'
 
 const route = useRoute()
+const pendingTab = ref('appointment')
 const unpaidLoading = ref(false)
+const unpaidRxLoading = ref(false)
 const paymentLoading = ref(false)
 const charging = ref(false)
-const unpaidList = ref([])
+const unpaidAppointments = ref([])
+const unpaidPrescriptions = ref([])
 const paymentList = ref([])
 const selectedRow = ref(null)
 const lastPaymentNo = ref('')
@@ -116,7 +144,7 @@ const todayStr = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const loadUnpaid = async () => {
+const loadUnpaidAppointments = async () => {
   unpaidLoading.value = true
   try {
     const res = await getReceptionAppointmentPage({
@@ -126,9 +154,19 @@ const loadUnpaid = async () => {
       paid: 0,
       status: 1
     })
-    unpaidList.value = res?.list || []
+    unpaidAppointments.value = res?.list || []
   } finally {
     unpaidLoading.value = false
+  }
+}
+
+const loadUnpaidPrescriptions = async () => {
+  unpaidRxLoading.value = true
+  try {
+    const list = await getUnpaidPrescriptions()
+    unpaidPrescriptions.value = Array.isArray(list) ? list : []
+  } finally {
+    unpaidRxLoading.value = false
   }
 }
 
@@ -149,11 +187,39 @@ const loadPayments = async () => {
 }
 
 const selectAppointment = (row) => {
+  if (!row) return
   selectedRow.value = row
-  if (row) {
-    chargeForm.bizType = 'APPOINTMENT'
-    chargeForm.bizId = String(row.appointmentId)
-    chargeForm.amount = Number(row.feeAmount) || 0
+  chargeForm.bizType = 'APPOINTMENT'
+  chargeForm.bizId = String(row.appointmentId)
+  chargeForm.amount = Number(row.feeAmount) || 0
+  pendingTab.value = 'appointment'
+}
+
+const selectPrescription = (row) => {
+  if (!row) return
+  selectedRow.value = row
+  chargeForm.bizType = 'PRESCRIPTION'
+  chargeForm.bizId = String(row.prescriptionId)
+  chargeForm.amount = Number(row.totalAmount) || 0
+  pendingTab.value = 'prescription'
+}
+
+const onBizTypeChange = (type) => {
+  selectedRow.value = null
+  chargeForm.bizId = ''
+  chargeForm.amount = null
+  if (type === 'PRESCRIPTION') {
+    loadUnpaidPrescriptions()
+  } else {
+    loadUnpaidAppointments()
+  }
+}
+
+const onTabChange = (name) => {
+  chargeForm.bizType = name === 'prescription' ? 'PRESCRIPTION' : 'APPOINTMENT'
+  selectedRow.value = null
+  if (name === 'prescription') {
+    loadUnpaidPrescriptions()
   }
 }
 
@@ -173,7 +239,8 @@ const handleCharge = async () => {
     })
     lastPaymentNo.value = res?.paymentNo || ''
     ElMessage.success('收费成功')
-    loadUnpaid()
+    loadUnpaidAppointments()
+    loadUnpaidPrescriptions()
     loadPayments()
   } finally {
     charging.value = false
@@ -181,14 +248,18 @@ const handleCharge = async () => {
 }
 
 const applyRouteQuery = () => {
-  if (route.query.bizType) chargeForm.bizType = route.query.bizType
+  if (route.query.bizType) {
+    chargeForm.bizType = route.query.bizType
+    pendingTab.value = route.query.bizType === 'PRESCRIPTION' ? 'prescription' : 'appointment'
+  }
   if (route.query.bizId) chargeForm.bizId = String(route.query.bizId)
 }
 
 watch(() => route.query, applyRouteQuery, { immediate: true })
 
 onMounted(() => {
-  loadUnpaid()
+  loadUnpaidAppointments()
+  loadUnpaidPrescriptions()
   loadPayments()
 })
 </script>

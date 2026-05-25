@@ -54,6 +54,9 @@ public class SecurityConfig {
                         // ========== 排班接口 ==========
                         .requestMatchers(HttpMethod.GET, "/api/admin/schedule/list").hasAnyRole("ADMIN", "SUPER_ADMIN", "DOCTOR")
 
+                        // ========== 管理端收费查询 ==========
+                        .requestMatchers(HttpMethod.GET, "/api/admin/payment/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+
                         // ========== 其他 admin 接口（增删改操作） ==========
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 

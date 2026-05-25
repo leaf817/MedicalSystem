@@ -263,15 +263,13 @@ public class AppointmentService {
             throw new BusinessWarningException("该预约已支付");
         }
 
-        appointment.setPaid(1);
-        appointment.setPaidTime(LocalDateTime.now());
-        appointment.setUpdatedTime(LocalDateTime.now());
-        appointmentMapper.updateById(appointment);
-
-        paymentService.recordPatientSelfPay(appointmentId, patientId);
-
-        // 支付后重新分配排队号（已支付的优先）
-        reassignAllQueueNumbers(appointment.getDoctorId(), appointment.getAppointmentDate());
+        paymentService.createPayment(
+                "APPOINTMENT",
+                appointmentId,
+                appointment.getFeeAmount(),
+                "ONLINE",
+                null,
+                "患者自助支付");
     }
 
     /**

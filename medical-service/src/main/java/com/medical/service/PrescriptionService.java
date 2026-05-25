@@ -26,5 +26,8 @@ public interface PrescriptionService {
 
     List<PrescriptionVo> getPendingDispenseList(String keyword, Integer status);
 
+    /** 待发药且未缴费的处方（收费台用） */
+    List<PrescriptionVo> listPendingUnpaid(String keyword);
+
     List<PrescriptionVo> getPrescriptionsByDoctorId(Long doctorId, Integer status);
 }

@@ -18,6 +18,8 @@ public class PrescriptionVo {
     private BigDecimal totalAmount;
     private Integer status;
     private String statusText;
+    /** 是否已缴费：0=未支付 1=已支付（以 payment 表为准） */
+    private Integer paid;
     private String remark;
     private LocalDateTime createdTime;
     private LocalDateTime updatedTime;
