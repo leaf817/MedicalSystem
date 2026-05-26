@@ -74,9 +74,10 @@ public class ReceptionPaymentController {
             @RequestParam(value = "bizType", required = false) String bizType,
             @RequestParam(value = "status", required = false) Integer status,
             @RequestParam(value = "patientId", required = false) Long patientId,
+            @RequestParam(value = "payMethod", required = false) String payMethod,
             @RequestParam(value = "dateFrom", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate dateFrom,
             @RequestParam(value = "dateTo", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate dateTo) {
-        return ResultVo.ok(paymentService.pageQuery(current, size, keyword, bizType, status, patientId, dateFrom, dateTo));
+        return ResultVo.ok(paymentService.pageQuery(current, size, keyword, bizType, status, patientId, payMethod, dateFrom, dateTo));
     }
 
     @GetMapping("/{paymentId}")

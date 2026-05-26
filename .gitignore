@@ -3,3 +3,10 @@
 target/
 *.log
 .DS_Store
+
+# 前端依赖与构建产物（npm install / vite build 生成，勿提交）
+medical-web/node_modules/
+medical-web/dist/
+
+# 编辑器本地配置
+.vscode/

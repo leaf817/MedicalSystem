@@ -202,9 +202,58 @@ public class PaymentService {
         }
     }
 
+    private static final int EXPORT_MAX_ROWS = 5000;
+
     public PageResult<PaymentVo> pageQuery(Long current, Long size, String keyword, String bizType,
-                                           Integer status, Long patientId,
+                                           Integer status, Long patientId, String payMethod,
                                            LocalDate dateFrom, LocalDate dateTo) {
+        LambdaQueryWrapper<Payment> wrapper = buildQueryWrapper(keyword, bizType, status, patientId, payMethod, dateFrom, dateTo);
+
+        Page<Payment> page = paymentMapper.selectPage(new Page<>(current, size), wrapper);
+        List<PaymentVo> list = toVoList(page.getRecords());
+
+        PageResult<PaymentVo> result = new PageResult<>();
+        result.setCurrentPage(page.getCurrent());
+        result.setPageSize(page.getSize());
+        result.setTotal(page.getTotal());
+        result.setList(list);
+        return result;
+    }
+
+    public List<PaymentVo> listForExport(String keyword, String bizType, Integer status,
+                                         Long patientId, String payMethod,
+                                         LocalDate dateFrom, LocalDate dateTo) {
+        LambdaQueryWrapper<Payment> wrapper = buildQueryWrapper(keyword, bizType, status, patientId, payMethod, dateFrom, dateTo);
+        wrapper.last("LIMIT " + EXPORT_MAX_ROWS);
+        return toVoList(paymentMapper.selectList(wrapper));
+    }
+
+    public byte[] exportCsv(String keyword, String bizType, Integer status,
+                            Long patientId, String payMethod,
+                            LocalDate dateFrom, LocalDate dateTo) {
+        List<PaymentVo> list = listForExport(keyword, bizType, status, patientId, payMethod, dateFrom, dateTo);
+        StringBuilder sb = new StringBuilder();
+        sb.append('\uFEFF');
+        sb.append("流水号,患者,业务类型,业务单号,金额,支付方式,操作员,支付时间,状态,备注\n");
+        for (PaymentVo vo : list) {
+            sb.append(csvCell(vo.getPaymentNo())).append(',')
+                    .append(csvCell(vo.getPatientName())).append(',')
+                    .append(csvCell(vo.getBizTypeText())).append(',')
+                    .append(csvCell(vo.getBizNo())).append(',')
+                    .append(csvCell(vo.getAmount() != null ? vo.getAmount().toPlainString() : "")).append(',')
+                    .append(csvCell(vo.getPayMethodText())).append(',')
+                    .append(csvCell(vo.getOperatorName())).append(',')
+                    .append(csvCell(vo.getPayTime() != null
+                            ? vo.getPayTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "")).append(',')
+                    .append(csvCell(vo.getStatusText())).append(',')
+                    .append(csvCell(vo.getRemark())).append('\n');
+        }
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    private LambdaQueryWrapper<Payment> buildQueryWrapper(String keyword, String bizType, Integer status,
+                                                          Long patientId, String payMethod,
+                                                          LocalDate dateFrom, LocalDate dateTo) {
         LambdaQueryWrapper<Payment> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(bizType)) {
             wrapper.eq(Payment::getBizType, bizType.trim().toUpperCase());
@@ -214,6 +263,9 @@ public class PaymentService {
         }
         if (patientId != null) {
             wrapper.eq(Payment::getPatientId, patientId);
+        }
+        if (StringUtils.hasText(payMethod)) {
+            wrapper.eq(Payment::getPayMethod, normalizePayMethod(payMethod));
         }
         if (dateFrom != null) {
             wrapper.ge(Payment::getPayTime, dateFrom.atStartOfDay());
@@ -237,16 +289,18 @@ public class PaymentService {
             });
         }
         wrapper.orderByDesc(Payment::getPayTime).orderByDesc(Payment::getPaymentId);
+        return wrapper;
+    }
 
-        Page<Payment> page = paymentMapper.selectPage(new Page<>(current, size), wrapper);
-        List<PaymentVo> list = toVoList(page.getRecords());
-
-        PageResult<PaymentVo> result = new PageResult<>();
-        result.setCurrentPage(page.getCurrent());
-        result.setPageSize(page.getSize());
-        result.setTotal(page.getTotal());
-        result.setList(list);
-        return result;
+    private String csvCell(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        if (escaped.contains(",") || escaped.contains("\"") || escaped.contains("\n") || escaped.contains("\r")) {
+            return "\"" + escaped + "\"";
+        }
+        return escaped;
     }
 
     public PaymentVo getDetail(Long paymentId) {

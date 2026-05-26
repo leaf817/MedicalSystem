@@ -1,1 +1,0 @@
-import{r as t}from"./request-Hl8kq9qz.js";function e(r){return t({url:"/login",method:"post",data:r})}function u(r){return t({url:"/register",method:"post",data:r})}function n(){return t({url:"/logout",method:"post"})}export{n as a,e as l,u as r};
