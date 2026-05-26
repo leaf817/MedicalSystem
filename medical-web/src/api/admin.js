@@ -2,9 +2,6 @@ import request from '@/utils/request'
 
 // ==================== 用户管理 ====================
 
-/**
- * 用户分页
- */
 export function getUserPage(params) {
   return request({
     url: '/admin/user/page',
@@ -13,9 +10,6 @@ export function getUserPage(params) {
   })
 }
 
-/**
- * 医生分页（doctor 业务表）
- */
 export function getDoctorPage(params) {
   return request({
     url: '/admin/doctor/page',
@@ -24,9 +18,6 @@ export function getDoctorPage(params) {
   })
 }
 
-/**
- * 新增用户（含角色）
- */
 export function createUser(data) {
   return request({
     url: '/admin/user',
@@ -35,9 +26,6 @@ export function createUser(data) {
   })
 }
 
-/**
- * 更新用户信息
- */
 export function updateUser(id, data) {
   return request({
     url: `/admin/user/${id}`,
@@ -46,9 +34,6 @@ export function updateUser(id, data) {
   })
 }
 
-/**
- * 修改用户状态
- */
 export function updateUserStatus(id, status) {
   return request({
     url: `/admin/user/${id}/status`,
@@ -57,9 +42,6 @@ export function updateUserStatus(id, status) {
   })
 }
 
-/**
- * 删除用户（同时解除角色关联）
- */
 export function deleteUser(id) {
   return request({
     url: `/admin/user/${id}`,
@@ -69,9 +51,6 @@ export function deleteUser(id) {
 
 // ==================== 角色管理 ====================
 
-/**
- * 新增角色
- */
 export function createRole(data) {
   return request({
     url: '/admin/role',
@@ -80,9 +59,6 @@ export function createRole(data) {
   })
 }
 
-/**
- * 删除角色（解除用户关联后删除）
- */
 export function deleteRole(id) {
   return request({
     url: `/admin/role/${id}`,
@@ -90,9 +66,6 @@ export function deleteRole(id) {
   })
 }
 
-/**
- * 更新角色信息
- */
 export function updateRole(id, data) {
   return request({
     url: `/admin/role/${id}`,
@@ -101,9 +74,6 @@ export function updateRole(id, data) {
   })
 }
 
-/**
- * 修改角色状态
- */
 export function updateRoleStatus(id, status) {
   return request({
     url: `/admin/role/${id}/status`,
@@ -112,9 +82,6 @@ export function updateRoleStatus(id, status) {
   })
 }
 
-/**
- * 角色分页
- */
 export function getRolePage(params) {
   return request({
     url: '/admin/role/page',
@@ -123,9 +90,6 @@ export function getRolePage(params) {
   })
 }
 
-/**
- * 角色列表
- */
 export function getRoleList(params) {
   return request({
     url: '/admin/role/list',
@@ -136,9 +100,6 @@ export function getRoleList(params) {
 
 // ==================== 药品管理 ====================
 
-/**
- * 药品分页
- */
 export function getMedicinePage(params) {
   return request({
     url: '/admin/medicine/page',
@@ -147,9 +108,6 @@ export function getMedicinePage(params) {
   })
 }
 
-/**
- * 库存预警分页（当前库存 ≤ 最低库存）
- */
 export function getMedicineStockWarning(params) {
   return request({
     url: '/admin/medicine/stock-warning',
@@ -158,9 +116,6 @@ export function getMedicineStockWarning(params) {
   })
 }
 
-/**
- * 药品分类（下拉）
- */
 export function getMedicineCategories() {
   return request({
     url: '/admin/medicine/categories',
@@ -168,9 +123,6 @@ export function getMedicineCategories() {
   })
 }
 
-/**
- * 新增药品
- */
 export function createMedicine(data) {
   return request({
     url: '/admin/medicine',
@@ -179,9 +131,6 @@ export function createMedicine(data) {
   })
 }
 
-/**
- * 更新药品
- */
 export function updateMedicine(id, data) {
   return request({
     url: `/admin/medicine/${id}`,
@@ -190,9 +139,6 @@ export function updateMedicine(id, data) {
   })
 }
 
-/**
- * 药品详情
- */
 export function getMedicineDetail(id) {
   return request({
     url: `/admin/medicine/${id}`,
@@ -202,7 +148,6 @@ export function getMedicineDetail(id) {
 
 // ==================== 科室管理 ====================
 
-/** 科室分页 */
 export function getDeptPage(params) {
   return request({
     url: '/admin/dept/page',
@@ -211,7 +156,6 @@ export function getDeptPage(params) {
   })
 }
 
-/** 科室树（启用） */
 export function getDeptTree() {
   return request({
     url: '/admin/dept/tree',
@@ -219,7 +163,6 @@ export function getDeptTree() {
   })
 }
 
-/** 科室下拉（启用，平铺） */
 export function getDeptOptions() {
   return request({
     url: '/admin/dept/options',
@@ -257,9 +200,8 @@ export function deleteDept(id) {
   })
 }
 
-// ==================== 管理端排班 ====================
+// ==================== 排班管理 ====================
 
-/** 排班分页/列表 */
 export function getScheduleList(params) {
   return request({
     url: '/admin/schedule/list',
@@ -268,7 +210,6 @@ export function getScheduleList(params) {
   })
 }
 
-/** 新增排班 */
 export function createSchedule(data) {
   return request({
     url: '/admin/schedule',
@@ -277,7 +218,6 @@ export function createSchedule(data) {
   })
 }
 
-/** 一键批量排班 */
 export function createScheduleBatch(data) {
   return request({
     url: '/admin/schedule/batch',
@@ -286,7 +226,6 @@ export function createScheduleBatch(data) {
   })
 }
 
-/** 更新排班 */
 export function updateSchedule(id, data) {
   return request({
     url: `/admin/schedule/${id}`,
@@ -295,7 +234,6 @@ export function updateSchedule(id, data) {
   })
 }
 
-/** 删除排班 */
 export function deleteSchedule(id) {
   return request({
     url: `/admin/schedule/${id}`,
@@ -303,7 +241,6 @@ export function deleteSchedule(id) {
   })
 }
 
-/** 一键停用过期且无有效预约的排班 */
 export function disableExpiredSchedules() {
   return request({
     url: '/admin/schedule/disable-expired',
@@ -311,9 +248,8 @@ export function disableExpiredSchedules() {
   })
 }
 
-// ==================== 管理端预约 ====================
+// ==================== 预约管理 ====================
 
-/** 预约分页 */
 export function getAdminAppointmentPage(params) {
   return request({
     url: '/admin/appointment/page',
@@ -322,7 +258,6 @@ export function getAdminAppointmentPage(params) {
   })
 }
 
-/** 预约详情 */
 export function getAdminAppointmentDetail(id) {
   return request({
     url: `/admin/appointment/${id}`,
@@ -330,7 +265,6 @@ export function getAdminAppointmentDetail(id) {
   })
 }
 
-/** 管理端取消预约 */
 export function cancelAdminAppointment(id) {
   return request({
     url: `/admin/appointment/${id}/cancel`,
@@ -338,95 +272,6 @@ export function cancelAdminAppointment(id) {
   })
 }
 
-/** 手动处理过期待就诊预约（转爽约） */
-export function expireOverdueAppointments() {
-  return request({
-    url: '/admin/appointment/expire-overdue',
-    method: 'put'
-  })
-}
-
-// ==================== 排班相关（患者端） ====================
-
-/**
- * 获取医生可预约日期（日历高亮用）
- */
-export function getAvailableDates(userId) {
-  return request({
-    url: '/patient/schedule/available-dates',
-    method: 'get',
-    params: { userId }
-  })
-}
-
-/**
- * 获取医生某天排班时段
- */
-export function getScheduleSlots(userId, date) {
-  return request({
-    url: '/patient/schedule/slots',
-    method: 'get',
-    params: { userId, date }
-  })
-}
-
-// ==================== 预约相关（患者端） ====================
-
-/**
- * 创建预约
- */
-export function createAppointment(data) {
-  return request({
-    url: '/patient/appointment/create',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 取消预约
- */
-export function cancelAppointment(appointmentId) {
-  return request({
-    url: `/patient/appointment/cancel/${appointmentId}`,
-    method: 'put'
-  })
-}
-
-/**
- * 获取我的预约列表
- */
-export function getMyAppointments(params) {
-  return request({
-    url: '/patient/appointment/my',
-    method: 'get',
-    params
-  })
-}
-
-/**
- * 获取预约详情
- */
-export function getAppointmentDetail(appointmentId) {
-  return request({
-    url: `/patient/appointment/${appointmentId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 支付预约
- */
-export function payAppointment(appointmentId) {
-  return request({
-    url: `/patient/appointment/pay/${appointmentId}`,
-    method: 'put'
-  })
-}
-
-/**
- * 签到
- */
 export function checkInAppointment(appointmentId) {
   return request({
     url: `/admin/appointment/${appointmentId}/checkin`,
@@ -434,268 +279,14 @@ export function checkInAppointment(appointmentId) {
   })
 }
 
-// ==================== 待诊队列（医生端） ====================
-
-/**
- * 获取待诊队列列表
- */
-export function getQueueList(params) {
+export function expireOverdueAppointments() {
   return request({
-    url: '/doctor/queue/list',
-    method: 'get',
-    params
-  })
-}
-
-/**
- * 开始接诊
- */
-export function startConsultation(appointmentId) {
-  return request({
-    url: `/doctor/queue/${appointmentId}/start`,
+    url: '/admin/appointment/expire-overdue',
     method: 'put'
   })
 }
 
-/**
- * 完成就诊
- */
-export function completeConsultation(appointmentId) {
-  return request({
-    url: `/doctor/queue/${appointmentId}/complete`,
-    method: 'put'
-  })
-}
-
-/**
- * 叫号
- */
-export function callNext(appointmentId) {
-  return request({
-    url: `/doctor/queue/${appointmentId}/call`,
-    method: 'put'
-  })
-}
-
-/**
- * 获取当前叫号信息
- */
-export function getCurrentCalling(queryDate) {
-  return request({
-    url: '/doctor/queue/current-calling',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-/**
- * 获取医生统计
- */
-export function getTodayStats(queryDate) {
-  return request({
-    url: '/doctor/queue/stats',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-/**
- * 获取可用日期
- */
-export function getAvailableQueueDates() {
-  return request({
-    url: '/doctor/queue/available-dates',
-    method: 'get'
-  })
-}
-
-/**
- * 医生取消预约
- */
-export function doctorCancelAppointment(appointmentId) {
-  return request({
-    url: `/doctor/queue/cancel/${appointmentId}`,
-    method: 'put'
-  })
-}
-
-/**
- * 重新排序队列
- */
-export function resortQueue() {
-  return request({
-    url: '/doctor/queue/resort',
-    method: 'put'
-  })
-}
-
-/**
- * 获取排队信息（包括排队列表）
- * @param {string} queryDate - 查询日期
- */
-export function getQueueInfo(queryDate) {
-  return request({
-    url: '/doctor/queue/queue-info',
-    method: 'get',
-    params: { queryDate }
-  })
-}
-
-// ==================== 医生端处方 ====================
-
-/**
- * 开立处方
- */
-export function createPrescription(data) {
-  return request({
-    url: '/doctor/prescription',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 更新处方
- */
-export function updatePrescription(id, data) {
-  return request({
-    url: `/doctor/prescription/${id}`,
-    method: 'put',
-    data
-  })
-}
-
-/**
- * 删除处方
- */
-export function deletePrescription(id) {
-  return request({
-    url: `/doctor/prescription/${id}`,
-    method: 'delete'
-  })
-}
-
-/**
- * 获取处方详情
- */
-export function getPrescriptionDetail(id) {
-  return request({
-    url: `/doctor/prescription/${id}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取病历下的处方列表
- */
-export function getPrescriptionsByRecord(recordId) {
-  return request({
-    url: `/doctor/prescription/record/${recordId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取患者的处方列表
- */
-export function getPrescriptionsByPatient(patientId) {
-  return request({
-    url: `/doctor/prescription/patient/${patientId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取当前医生的处方列表
- */
-export function getMyPrescriptions(params) {
-  return request({
-    url: '/doctor/prescription/my',
-    method: 'get',
-    params
-  })
-}
-
-// ==================== 药房端处方 ====================
-
-/**
- * 待发药列表
- */
-export function getPendingPrescriptions(keyword) {
-  return request({
-    url: '/nurse/prescription/pending',
-    method: 'get',
-    params: { keyword }
-  })
-}
-
-/**
- * 已发药列表
- */
-export function getDispensedPrescriptions(keyword) {
-  return request({
-    url: '/nurse/prescription/dispensed',
-    method: 'get',
-    params: { keyword }
-  })
-}
-
-/**
- * 发药确认
- */
-export function dispensePrescription(id) {
-  return request({
-    url: `/nurse/prescription/${id}/dispense`,
-    method: 'put'
-  })
-}
-
-/**
- * 药房端获取处方详情
- */
-export function getNursePrescriptionDetail(id) {
-  return request({
-    url: `/nurse/prescription/${id}`,
-    method: 'get'
-  })
-}
-
-// ==================== 医生端工作台统计 ====================
-
-export function getDoctorStatistics() {
-  return request({
-    url: '/api/doctor/statistics',
-    method: 'get'
-  })
-}
-
-export function getTodayQueue(params) {
-  return request({
-    url: '/api/doctor/queue/today',
-    method: 'get',
-    params
-  })
-}
-
-// ==================== 医生端接诊管理（备用接口） ====================
-
-export function endConsultation(appointmentId) {
-  return request({
-    url: '/api/doctor/consultation/end',
-    method: 'post',
-    params: { appointmentId }
-  })
-}
-
-export function callNextPatient(appointmentId) {
-  return request({
-    url: '/api/doctor/queue/call',
-    method: 'post',
-    params: { appointmentId }
-  })
-}
-
-// ==================== 管理端工作台 ====================
+// ==================== 工作台 ====================
 
 export function getAdminDashboardStats() {
   return request({

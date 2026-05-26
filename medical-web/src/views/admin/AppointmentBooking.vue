@@ -252,7 +252,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getDeptOptions, getUserPage, getAvailableDates, getScheduleSlots, createAppointment } from '@/api/admin'
+import { getDeptOptions, getUserPage } from '@/api/admin'
+import { getAvailableDates, getScheduleSlots, createAppointment } from '@/api/patient'
 import { createReceptionAppointment } from '@/api/reception'
 
 const props = defineProps({

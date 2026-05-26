@@ -171,7 +171,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { cancelAppointment, getAppointmentDetail, getMyAppointments,payAppointment  } from '@/api/admin'
+import { cancelAppointment, getAppointmentDetail, getMyAppointments, payAppointment } from '@/api/patient'
 
 const router = useRouter()
 const loading = ref(false)

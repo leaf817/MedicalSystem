@@ -2,6 +2,11 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 
+/**
+ * 统一 HTTP 客户端（Session 认证）
+ * - withCredentials: true 携带 Cookie，与后端 HttpSession 登录态配合
+ * - 开发环境由 Vite 代理 /api → localhost:8081，需保持同域 Cookie 传递
+ */
 const request = axios.create({
   baseURL: '/api',
   timeout: 10000,

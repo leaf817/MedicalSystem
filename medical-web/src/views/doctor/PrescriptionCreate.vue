@@ -361,14 +361,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Loading } from '@element-plus/icons-vue'
 import {
-  getMedicinePage,
   createPrescription,
-  getMedicineCategories,
   getPrescriptionDetail,
   deletePrescription,
-  getUserPage,
   getMyPrescriptions
-} from '@/api/admin'
+} from '@/api/doctor'
+import { getMedicinePage, getMedicineCategories, getUserPage } from '@/api/admin'
 import { getMedicalRecordById } from '@/api/doctor'
 
 const route = useRoute()

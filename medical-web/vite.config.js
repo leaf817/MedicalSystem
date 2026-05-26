@@ -12,6 +12,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Session 场景：代理需转发 Cookie，前端 request 已配置 withCredentials
       '/api': {
         target: 'http://localhost:8081',
         changeOrigin: true

@@ -70,7 +70,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getDispensedPrescriptions, getNursePrescriptionDetail } from '@/api/admin'
+import { getDispensedPrescriptions, getNursePrescriptionDetail } from '@/api/nurse'
 
 const loading = ref(false)
 const keyword = ref('')

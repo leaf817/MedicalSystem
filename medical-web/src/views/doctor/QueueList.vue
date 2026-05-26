@@ -351,7 +351,7 @@ import {
   getTodayStats,
   getAvailableQueueDates,
   doctorCancelAppointment
-} from '@/api/admin'
+} from '@/api/doctor'
 
 const loading = ref(false)
 const refreshing = ref(false)

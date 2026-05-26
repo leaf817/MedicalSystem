@@ -92,7 +92,7 @@ import {
   getPendingPrescriptions,
   getNursePrescriptionDetail,
   dispensePrescription
-} from '@/api/admin'
+} from '@/api/nurse'
 
 const loading = ref(false)
 const keyword = ref('')
