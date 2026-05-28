@@ -675,4 +675,7 @@ flowchart LR
 | 0 准备 | 部分完成 | 2026-05-28 | 表结构脚本已就绪；智谱 curl 需本机设置 `ZHIPU_API_KEY` |
 | 1 需求冻结 | 已完成 | 2026-05-28 | 见 `application-local.yml.example` 头部说明 |
 | 2 库表与配置 | 已完成 | 2026-05-28 | `v16` 已执行；`AiProperties` 单测通过 |
-| 3 LLM 适配层 | 未开始 | — | — |
+| 3 LLM 适配层 | 已完成 | 2026-05-28 | LlmClient、智谱 RestClient、Mock、急症检测、单测 |
+| 4 问诊 Service | 已完成 | 2026-05-28 | AiConsultService、Prompt、Redis 限流、摘要解析 |
+| 5 REST Controller | 已完成 | 2026-05-28 | PatientAiConsultController、Knife4j |
+| 6 前端对话页 | 已完成 | 2026-05-28 | AiConsultChat、子组件、路由菜单、预约 deptId |

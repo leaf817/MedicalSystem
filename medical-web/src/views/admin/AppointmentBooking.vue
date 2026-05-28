@@ -250,7 +250,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getDeptOptions, getUserPage } from '@/api/admin'
 import { getAvailableDates, getScheduleSlots, createAppointment } from '@/api/patient'
@@ -273,6 +273,7 @@ const props = defineProps({
 
 const emit = defineEmits(['booked'])
 
+const route = useRoute()
 const router = useRouter()
 const isReception = computed(() => props.mode === 'reception')
 
@@ -608,8 +609,19 @@ const resetForm = () => {
   loadDeptList()
 }
 
-onMounted(() => {
-  loadDeptList()
+const applyDeptFromQuery = () => {
+  const deptId = route.query.deptId
+  if (!deptId || isReception.value) return
+  const id = Number(deptId)
+  const dept = deptList.value.find((d) => d.deptId === id)
+  if (dept) {
+    selectDept(dept)
+  }
+}
+
+onMounted(async () => {
+  await loadDeptList()
+  applyDeptFromQuery()
 })
 </script>
 

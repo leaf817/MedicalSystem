@@ -90,6 +90,11 @@ const routes = [
         meta: { title: '我的处方' }
       },
       {
+        path: 'patient/ai-consult',
+        component: () => import('@/views/patient/AiConsultChat.vue'),
+        meta: { title: '智能问诊' }
+      },
+      {
         path: 'reception/dashboard',
         component: () => import('@/views/reception/ReceptionDashboard.vue'),
         meta: { title: '挂号工作台' }

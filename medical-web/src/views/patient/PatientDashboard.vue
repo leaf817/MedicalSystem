@@ -64,9 +64,9 @@ const userInfo = computed(() => {
 
 const quickEntries = [
   { title: '我要预约', icon: 'fa-solid fa-calendar-plus', path: '/patient/appointment' },
+  { title: '智能问诊', icon: 'fa-solid fa-robot', path: '/patient/ai-consult' },
   { title: '我的预约', icon: 'fa-solid fa-clock', path: '/patient/my-appointment' },
-  { title: '我的病历', icon: 'fa-solid fa-file-medical', path: '/patient/medical-record' },
-  { title: '我的处方', icon: 'fa-solid fa-prescription', path: '/patient/prescription' }
+  { title: '我的病历', icon: 'fa-solid fa-file-medical', path: '/patient/medical-record' }
 ]
 
 const loadStats = async () => {

@@ -1,5 +1,7 @@
 package com.medical.common.exception;
 
+import com.medical.ai.exception.LlmApiException;
+import com.medical.ai.exception.LlmTimeoutException;
 import com.medical.common.response.GlobalCodeEnum;
 import com.medical.common.response.ResultVo;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ServiceException.class)
     public ResultVo<?> handleServiceException(ServiceException e) {
         log.error("业务层异常: {}", e.getMessage());
+        return ResultVo.build(GlobalCodeEnum.SERVICE_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler({LlmApiException.class, LlmTimeoutException.class})
+    public ResultVo<?> handleLlmException(ServiceException e) {
+        if (e instanceof LlmTimeoutException) {
+            log.warn("大模型超时: {}", e.getMessage());
+        } else {
+            log.warn("大模型调用失败: {}", e.getMessage());
+        }
         return ResultVo.build(GlobalCodeEnum.SERVICE_ERROR, e.getMessage());
     }
 
