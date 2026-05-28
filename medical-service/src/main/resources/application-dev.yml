@@ -1,5 +1,7 @@
 # 开发环境配置
 spring:
+  config:
+    import: optional:classpath:application-local.yml
   datasource:
     url: jdbc:mysql://localhost:3306/medical_service?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
     username: root
@@ -16,3 +18,19 @@ spring:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 阶段 E：智谱 AI（Key 勿提交 Git，见 application-local.yml.example）
+medical:
+  ai:
+    enabled: true
+    provider: zhipu
+    base-url: https://open.bigmodel.cn/api/paas/v4/
+    api-key: ${ZHIPU_API_KEY:}
+    model: glm-4-flash
+    timeout-ms: 60000
+    max-context-messages: 20
+    max-output-tokens: 1024
+    temperature: 0.5
+    daily-request-limit-per-user: 50
+    max-user-message-length: 2000
+    mock-reply-enabled: true

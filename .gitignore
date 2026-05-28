@@ -10,3 +10,6 @@ medical-web/dist/
 
 # 编辑器本地配置
 .vscode/
+
+# 本地密钥（阶段 E 智谱 API Key）
+medical-service/src/main/resources/application-local.yml
