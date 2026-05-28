@@ -7,7 +7,13 @@ import com.medical.common.exception.ServiceException;
 import com.medical.common.pagination.PageResult;
 import com.medical.common.response.ResultVo;
 import com.medical.domain.dto.MedicineCreateDto;
+import com.medical.domain.dto.MedicineStockAdjustDto;
+import com.medical.domain.dto.MedicineStockInboundDto;
 import com.medical.domain.dto.MedicineUpdateDto;
+import com.medical.domain.entity.SysUser;
+import com.medical.domain.vo.MedicineStockLogVo;
+import com.medical.mapper.SysUserMapper;
+import com.medical.service.MedicineStockService;
 import com.medical.domain.entity.Medicine;
 import com.medical.domain.entity.MedicineCategory;
 import com.medical.domain.vo.MedicineCategoryVo;
@@ -18,6 +24,8 @@ import com.medical.mapper.MedicineMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +54,8 @@ public class SysMedicineController {
 
     private final MedicineMapper medicineMapper;
     private final MedicineCategoryMapper medicineCategoryMapper;
+    private final MedicineStockService medicineStockService;
+    private final SysUserMapper sysUserMapper;
 
     @PostMapping
     public ResultVo<Void> create(@Valid @RequestBody MedicineCreateDto dto) {
@@ -88,6 +98,32 @@ public class SysMedicineController {
     /**
      * 库存预警分页：当前库存 &lt;= 最低库存（与开发文档一致）
      */
+    @PutMapping("/{id}/stock")
+    public ResultVo<Void> adjustStock(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody MedicineStockAdjustDto dto) {
+        medicineStockService.adjustToActual(id, dto.getActualQuantity(), getCurrentUserId(), dto.getRemark());
+        return ResultVo.ok();
+    }
+
+    @PostMapping("/{id}/inbound")
+    public ResultVo<Void> inboundStock(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody MedicineStockInboundDto dto) {
+        medicineStockService.inbound(id, dto.getQuantity(), getCurrentUserId(), dto.getRemark());
+        return ResultVo.ok();
+    }
+
+    @GetMapping("/stock-log/page")
+    public ResultVo<PageResult<MedicineStockLogVo>> stockLogPage(
+            @RequestParam(value = "current", defaultValue = "1") Long current,
+            @RequestParam(value = "size", defaultValue = "10") Long size,
+            @RequestParam(value = "medicineId", required = false) Long medicineId,
+            @RequestParam(value = "bizType", required = false) String bizType,
+            @RequestParam(value = "keyword", required = false) String keyword) {
+        return ResultVo.ok(medicineStockService.pageLogs(current, size, medicineId, bizType, keyword));
+    }
+
     @GetMapping("/stock-warning")
     public ResultVo<PageResult<MedicineListVo>> stockWarning(
             @RequestParam(value = "current", defaultValue = "1") Long current,
@@ -266,6 +302,16 @@ public class SysMedicineController {
         }).collect(Collectors.toList());
 
         return ResultVo.ok(voList);
+    }
+
+    private Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        SysUser user = sysUserMapper.selectOne(
+                new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, auth.getName()));
+        return user != null ? user.getUserId() : null;
     }
 
 }

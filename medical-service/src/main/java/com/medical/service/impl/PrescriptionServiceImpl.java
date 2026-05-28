@@ -11,6 +11,7 @@ import com.medical.domain.entity.*;
 import com.medical.domain.vo.PrescriptionDetailVo;
 import com.medical.domain.vo.PrescriptionVo;
 import com.medical.mapper.*;
+import com.medical.service.MedicineStockService;
 import com.medical.service.PaymentService;
 import com.medical.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final PatientMapper patientMapper;
     private final DoctorMapper doctorMapper;
     private final PaymentService paymentService;
+    private final MedicineStockService medicineStockService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -302,13 +304,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             if (medicine == null) {
                 throw new BusinessWarningException("药品不存在");
             }
-            if (medicine.getStockQuantity() < detail.getQuantity()) {
-                throw new BusinessWarningException("药品库存不足: " + medicine.getName() +
-                        "，当前库存: " + medicine.getStockQuantity());
-            }
-            medicine.setStockQuantity(medicine.getStockQuantity() - detail.getQuantity());
-            medicine.setUpdatedTime(LocalDateTime.now());
-            medicineMapper.updateById(medicine);
+            medicineStockService.deductForDispense(
+                    detail.getMedicineId(), detail.getQuantity(), id, nurseId);
         }
 
         prescription.setStatus(2); // 已发药

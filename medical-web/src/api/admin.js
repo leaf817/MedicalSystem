@@ -146,6 +146,30 @@ export function getMedicineDetail(id) {
   })
 }
 
+export function adjustMedicineStock(id, data) {
+  return request({
+    url: `/admin/medicine/${id}/stock`,
+    method: 'put',
+    data
+  })
+}
+
+export function inboundMedicineStock(id, data) {
+  return request({
+    url: `/admin/medicine/${id}/inbound`,
+    method: 'post',
+    data
+  })
+}
+
+export function getMedicineStockLogPage(params) {
+  return request({
+    url: '/admin/medicine/stock-log/page',
+    method: 'get',
+    params
+  })
+}
+
 // ==================== 科室管理 ====================
 
 export function getDeptPage(params) {

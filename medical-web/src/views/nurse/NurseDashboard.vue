@@ -11,18 +11,36 @@
     </div>
 
     <el-row :gutter="20" class="dashboard-row" v-loading="loading">
-      <el-col :span="12">
-        <el-card class="stat-card stat-orange" shadow="hover">
+      <el-col :span="8">
+        <el-card class="stat-card stat-orange" shadow="hover" @click="goto('/nurse/prescription')">
           <i class="fa-solid fa-pills stat-icon"></i>
           <div class="stat-num">{{ stats.pendingDispense ?? 0 }}</div>
           <div class="stat-desc">待发药</div>
         </el-card>
       </el-col>
-      <el-col :span="12">
-        <el-card class="stat-card stat-green" shadow="hover">
+      <el-col :span="8">
+        <el-card class="stat-card stat-green" shadow="hover" @click="goto('/nurse/dispense')">
           <i class="fa-solid fa-circle-check stat-icon"></i>
           <div class="stat-num">{{ stats.todayDispensed ?? 0 }}</div>
           <div class="stat-desc">今日已发药</div>
+        </el-card>
+      </el-col>
+      <el-col :span="8">
+        <el-card
+          class="stat-card stat-red"
+          shadow="hover"
+          :class="{ 'has-warning': (stats.stockWarningCount ?? 0) > 0 }"
+          @click="goto('/nurse/inventory')"
+        >
+          <el-badge
+            :value="stats.stockWarningCount ?? 0"
+            :hidden="!(stats.stockWarningCount > 0)"
+            class="warning-badge"
+          >
+            <i class="fa-solid fa-triangle-exclamation stat-icon"></i>
+          </el-badge>
+          <div class="stat-num">{{ stats.stockWarningCount ?? 0 }}</div>
+          <div class="stat-desc">低库存药品</div>
         </el-card>
       </el-col>
     </el-row>
@@ -84,9 +102,17 @@ onMounted(loadStats)
 }
 .stat-orange .stat-icon { color: #f59e0b; }
 .stat-green .stat-icon { color: #22c55e; }
+.stat-red .stat-icon { color: #ef4444; }
 .stat-card {
   text-align: center;
   padding: 8px 0;
+  border: none;
+  cursor: pointer;
+}
+.stat-card.has-warning {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
+.warning-badge :deep(.el-badge__content) {
   border: none;
 }
 .stat-icon {

@@ -40,3 +40,44 @@ export function getNursePrescriptionDetail(id) {
     method: 'get'
   })
 }
+
+// ==================== 库存盘点 ====================
+
+export function getInventoryMedicinePage(params) {
+  return request({
+    url: '/nurse/inventory/medicine/page',
+    method: 'get',
+    params
+  })
+}
+
+export function getInventoryMedicineCategories() {
+  return request({
+    url: '/nurse/inventory/medicine/categories',
+    method: 'get'
+  })
+}
+
+export function adjustInventoryStock(id, data) {
+  return request({
+    url: `/nurse/inventory/medicine/${id}/adjust`,
+    method: 'put',
+    data
+  })
+}
+
+export function inboundInventoryStock(id, data) {
+  return request({
+    url: `/nurse/inventory/medicine/${id}/inbound`,
+    method: 'post',
+    data
+  })
+}
+
+export function getInventoryStockLogPage(params) {
+  return request({
+    url: '/nurse/inventory/stock-log/page',
+    method: 'get',
+    params
+  })
+}

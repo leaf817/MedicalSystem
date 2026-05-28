@@ -117,7 +117,7 @@ const routes = [
       { path: 'nurse/dashboard', component: () => import('@/views/nurse/NurseDashboard.vue'), meta: { title: '护士工作台' } },
       { path: 'nurse/prescription', component: () => import('@/views/nurse/NursePrescriptionPending.vue'), meta: { title: '待发药' } },
       { path: 'nurse/dispense', component: () => import('@/views/nurse/NurseDispenseList.vue'), meta: { title: '发药确认' } },
-      { path: 'nurse/inventory', component: Placeholder, meta: { title: '药品盘点' } }
+      { path: 'nurse/inventory', component: () => import('@/views/nurse/NurseInventory.vue'), meta: { title: '药品盘点' } }
     ]
   }
 ]

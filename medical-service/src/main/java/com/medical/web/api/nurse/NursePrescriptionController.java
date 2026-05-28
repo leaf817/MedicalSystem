@@ -1,11 +1,16 @@
 package com.medical.web.api.nurse;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.medical.common.response.ResultVo;
+import com.medical.domain.entity.SysUser;
 import com.medical.domain.vo.PrescriptionVo;
+import com.medical.mapper.SysUserMapper;
 import com.medical.service.PrescriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +22,7 @@ import java.util.List;
 public class NursePrescriptionController {
 
     private final PrescriptionService prescriptionService;
+    private final SysUserMapper sysUserMapper;
 
     @Operation(summary = "待发药列表")
     @GetMapping("/pending")
@@ -37,9 +43,18 @@ public class NursePrescriptionController {
     @Operation(summary = "发药确认")
     @PutMapping("/{id}/dispense")
     public ResultVo<Void> dispense(@PathVariable Long id) {
-        // TODO: 实际实现中需要获取当前登录护士ID
-        prescriptionService.dispensePrescription(id, 1L);
+        prescriptionService.dispensePrescription(id, getCurrentUserId());
         return ResultVo.ok();
+    }
+
+    private Long getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return null;
+        }
+        SysUser user = sysUserMapper.selectOne(
+                new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, auth.getName()));
+        return user != null ? user.getUserId() : null;
     }
 
     @Operation(summary = "处方详情")

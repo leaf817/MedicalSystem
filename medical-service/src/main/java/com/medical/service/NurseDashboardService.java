@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.medical.domain.entity.Prescription;
 import com.medical.domain.vo.NurseDashboardVo;
 import com.medical.mapper.PrescriptionMapper;
+import com.medical.service.MedicineStockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 public class NurseDashboardService {
 
     private final PrescriptionMapper prescriptionMapper;
+    private final MedicineStockService medicineStockService;
 
     public NurseDashboardVo getStats() {
         LocalDate today = LocalDate.now();
@@ -31,6 +33,7 @@ public class NurseDashboardService {
                         .eq(Prescription::getStatus, 2)
                         .ge(Prescription::getUpdatedTime, start)
                         .lt(Prescription::getUpdatedTime, end)));
+        vo.setStockWarningCount(medicineStockService.countStockWarning());
         return vo;
     }
 }
