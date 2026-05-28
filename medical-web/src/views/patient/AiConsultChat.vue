@@ -2,61 +2,83 @@
   <div class="ai-consult-page">
     <div class="page-header">
       <div class="header-left">
-        <i class="fa-solid fa-robot page-icon"></i>
-        <div>
-          <h2 class="page-title">智能问诊助手</h2>
-          <p class="page-desc">AI 预问诊参考，不能替代医生面诊</p>
+        <div class="header-icon-wrap">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="header-text">
+          <div class="title-row">
+            <h2 class="page-title">智能问诊助手</h2>
+            <span class="page-disclaimer">
+              <i class="fa-solid fa-circle-info"></i>
+              {{ displayDisclaimer }}
+            </span>
+          </div>
+        </div>
+        <div class="header-user">
+          <el-avatar :size="36" :src="userAvatarUrl || undefined" class="avatar-login">
+            {{ userAvatarInitial }}
+          </el-avatar>
+          <span class="user-name">{{ userDisplayName }}</span>
         </div>
       </div>
       <div class="header-actions">
-        <el-button @click="historyVisible = true">
+        <el-button round @click="historyVisible = true">
           <i class="fa-solid fa-clock-rotate-left"></i> 历史会话
         </el-button>
-        <el-button type="primary" :disabled="pageLoading" @click="handleNewSession">
+        <el-button type="primary" round :disabled="pageLoading" @click="handleNewSession">
           <i class="fa-solid fa-plus"></i> 新建会话
         </el-button>
       </div>
     </div>
 
     <div class="content-card" v-loading="pageLoading">
-      <ConsultDisclaimer :text="disclaimer" />
-
-      <div v-if="sessionId" class="session-meta">
-        <el-tag size="small" type="info">会话 {{ sessionNo || sessionId }}</el-tag>
-        <el-tag size="small" :type="statusTagType">{{ statusText }}</el-tag>
+      <div v-if="sessionId" class="card-fixed-top">
+        <div class="session-meta">
+          <el-tag size="small" type="info">会话 {{ sessionNo || sessionId }}</el-tag>
+          <el-tag size="small" :type="statusTagType">{{ statusText }}</el-tag>
+        </div>
       </div>
 
-      <ChatMessageList ref="messageListRef" :messages="messages" :loading="sending" />
+      <div class="chat-panel">
+        <ChatMessageList
+          ref="messageListRef"
+          :messages="messages"
+          :loading="sending"
+          :user-avatar-url="userAvatarUrl"
+          :user-avatar-initial="userAvatarInitial"
+        />
+      </div>
 
-      <ChatInputBar
-        v-if="isActive"
-        :disabled="sending"
-        @send="handleSend"
-      />
-
-      <div v-if="sessionId" class="footer-actions">
-        <template v-if="isActive">
-          <el-button type="warning" plain :loading="ending" @click="handleEndSession">
-            结束问诊
-          </el-button>
-        </template>
-        <template v-else>
-          <el-button type="primary" plain @click="openSummary">
-            查看摘要
-          </el-button>
-          <el-button
-            v-if="lastSummary?.suggestedDeptId || lastSummary?.suggestedDeptName"
-            type="primary"
-            @click="goAppointment(lastSummary)"
-          >
-            去预约
-          </el-button>
-        </template>
+      <div class="card-fixed-bottom">
+        <ChatInputBar
+          v-if="isActive"
+          :disabled="sending"
+          @send="handleSend"
+        />
+        <div v-if="sessionId" class="footer-actions">
+          <template v-if="isActive">
+            <el-button type="warning" plain :loading="ending" @click="handleEndSession">
+              结束问诊
+            </el-button>
+          </template>
+          <template v-else>
+            <el-button type="primary" plain @click="openSummary">
+              查看摘要
+            </el-button>
+            <el-button
+              v-if="lastSummary?.suggestedDeptId || lastSummary?.suggestedDeptName"
+              type="primary"
+              @click="goAppointment(lastSummary)"
+            >
+              去预约
+            </el-button>
+          </template>
+        </div>
       </div>
     </div>
 
     <!-- 历史会话 -->
-    <el-drawer v-model="historyVisible" title="历史问诊" size="400px">
+    <el-drawer v-model="historyVisible" title="历史问诊" size="400px" class="history-drawer">
       <div v-loading="historyLoading">
         <div
           v-for="item in historyList"
@@ -86,9 +108,13 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import {
+  getUserInfoFromStorage,
+  getUserDisplayName,
+  getUserAvatarInitial
+} from '@/utils/user-session'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import ConsultDisclaimer from '@/components/ai/ConsultDisclaimer.vue'
 import ChatMessageList from '@/components/ai/ChatMessageList.vue'
 import ChatInputBar from '@/components/ai/ChatInputBar.vue'
 import ConsultSummaryDrawer from '@/components/ai/ConsultSummaryDrawer.vue'
@@ -101,8 +127,16 @@ import {
   getAiSessionSummary
 } from '@/api/ai-consult'
 
+const DEFAULT_DISCLAIMER =
+  '本服务由人工智能提供健康咨询参考，不能替代执业医师面诊。如有胸痛、呼吸困难、大出血、意识不清等紧急情况，请立即拨打 120 或前往急诊科。'
+
 const route = useRoute()
 const router = useRouter()
+
+const userInfo = computed(() => getUserInfoFromStorage())
+const userDisplayName = computed(() => getUserDisplayName(userInfo.value))
+const userAvatarUrl = computed(() => userInfo.value?.avatarUrl || '')
+const userAvatarInitial = computed(() => getUserAvatarInitial(userInfo.value))
 
 const pageLoading = ref(false)
 const sending = ref(false)
@@ -114,13 +148,18 @@ const historyList = ref([])
 const sessionId = ref(null)
 const sessionNo = ref('')
 const sessionStatus = ref(1)
-const disclaimer = ref('')
+const disclaimer = ref(DEFAULT_DISCLAIMER)
 const messages = ref([])
 const lastSummary = ref(null)
 
 const summaryVisible = ref(false)
 const summaryData = ref(null)
 const messageListRef = ref(null)
+
+const displayDisclaimer = computed(() => {
+  const t = disclaimer.value?.trim()
+  return t || DEFAULT_DISCLAIMER
+})
 
 const isActive = computed(() => sessionStatus.value === 1)
 
@@ -179,7 +218,7 @@ const startNewSession = async () => {
     sessionId.value = res.sessionId
     sessionNo.value = res.sessionNo
     sessionStatus.value = 1
-    disclaimer.value = res.disclaimer || disclaimer.value
+    disclaimer.value = res.disclaimer?.trim() || DEFAULT_DISCLAIMER
     lastSummary.value = null
     messages.value = [
       {
@@ -327,80 +366,194 @@ onBeforeRouteLeave((to, from, next) => {
 
 <style scoped>
 .ai-consult-page {
-  padding: 24px 28px 32px;
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
 }
 
 .page-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 14px;
   flex-wrap: wrap;
   gap: 12px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.page-icon {
-  font-size: 36px;
-  color: #6366f1;
+.header-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+  font-size: 22px;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  flex-shrink: 0;
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .page-title {
   margin: 0;
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 21px;
+  font-weight: 700;
   color: #1e293b;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
 }
 
-.page-desc {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #64748b;
+.page-disclaimer {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #b45309;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.page-disclaimer i {
+  margin-right: 4px;
+  color: #d97706;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  background: #f8fafc;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+}
+
+@media (min-width: 900px) {
+  .header-user {
+    margin-left: auto;
+  }
+}
+
+.header-user .avatar-login {
+  background: linear-gradient(135deg, #e8a54b, #d48232);
+  color: #fff;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-actions {
   display: flex;
   gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-actions .el-button--primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
 }
 
 .content-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px 24px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 16px;
+  padding: 16px 18px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.1);
+  backdrop-filter: blur(6px);
+}
+
+.card-fixed-top {
+  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 .session-meta {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+}
+
+.chat-panel {
+  flex: 1;
+  min-height: 0;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-fixed-bottom {
+  flex-shrink: 0;
 }
 
 .footer-actions {
-  margin-top: 16px;
+  margin-top: 12px;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
 }
 
 .history-item {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-bottom: 10px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  background: #fff;
 }
 
 .history-item:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  transform: translateX(2px);
 }
 
 .history-title {
@@ -415,5 +568,20 @@ onBeforeRouteLeave((to, from, next) => {
   align-items: center;
   font-size: 12px;
   color: #94a3b8;
+}
+</style>
+
+<style>
+/* 智能问诊页：主内容区不整体滚动，高度交给页面内消息区 */
+.main-content:has(.ai-consult-page) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content:has(.ai-consult-page) > .ai-consult-page {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
 }
 </style>

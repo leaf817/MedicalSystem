@@ -1,19 +1,20 @@
 <template>
   <div class="chat-input-bar">
     <div v-if="chips.length" class="quick-chips">
-      <span class="chips-label">快捷描述：</span>
+      <span class="chips-label"><i class="fa-solid fa-bolt"></i> 快捷描述</span>
       <el-tag
         v-for="chip in chips"
         :key="chip"
         class="chip"
-        effect="plain"
+        round
+        effect="light"
         :disabled="disabled"
         @click="appendChip(chip)"
       >
         {{ chip }}
       </el-tag>
     </div>
-    <div class="input-row">
+    <div class="input-shell">
       <el-input
         v-model="inputText"
         type="textarea"
@@ -26,11 +27,13 @@
       <el-button
         type="primary"
         class="send-btn"
+        round
         :disabled="disabled || !inputText.trim()"
         :loading="disabled"
         @click="handleSend"
       >
-        <i class="fa-solid fa-paper-plane"></i> 发送
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>发送</span>
       </el-button>
     </div>
   </div>
@@ -75,9 +78,7 @@ defineExpose({
 
 <style scoped>
 .chat-input-bar {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 12px;
-  margin-top: 12px;
+  padding-top: 4px;
 }
 
 .quick-chips {
@@ -85,30 +86,62 @@ defineExpose({
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .chips-label {
   font-size: 13px;
   color: #64748b;
+  font-weight: 500;
+}
+
+.chips-label i {
+  color: #6366f1;
+  margin-right: 4px;
 }
 
 .chip {
   cursor: pointer;
+  border-color: #e0e7ff !important;
+  color: #4f46e5 !important;
+  background: #eef2ff !important;
 }
 
-.input-row {
+.chip:hover:not(.is-disabled) {
+  background: #e0e7ff !important;
+}
+
+.input-shell {
   display: flex;
   gap: 12px;
   align-items: flex-end;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.input-row :deep(.el-textarea) {
-  flex: 1;
+.input-shell:focus-within {
+  border-color: #a5b4fc;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.input-shell :deep(.el-textarea__inner) {
+  background: transparent;
+  box-shadow: none;
+  padding: 4px 0;
 }
 
 .send-btn {
-  height: 40px;
+  height: 42px;
+  padding: 0 20px;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+}
+
+.send-btn i {
+  margin-right: 6px;
 }
 </style>
