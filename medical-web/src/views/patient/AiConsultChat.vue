@@ -14,12 +14,6 @@
             </span>
           </div>
         </div>
-        <div class="header-user">
-          <el-avatar :size="36" :src="userAvatarUrl || undefined" class="avatar-login">
-            {{ userAvatarInitial }}
-          </el-avatar>
-          <span class="user-name">{{ userDisplayName }}</span>
-        </div>
       </div>
       <div class="header-actions">
         <el-button round @click="historyVisible = true">
@@ -110,7 +104,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import {
   getUserInfoFromStorage,
-  getUserDisplayName,
   getUserAvatarInitial
 } from '@/utils/user-session'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
@@ -134,7 +127,6 @@ const route = useRoute()
 const router = useRouter()
 
 const userInfo = computed(() => getUserInfoFromStorage())
-const userDisplayName = computed(() => getUserDisplayName(userInfo.value))
 const userAvatarUrl = computed(() => userInfo.value?.avatarUrl || '')
 const userAvatarInitial = computed(() => getUserAvatarInitial(userInfo.value))
 
@@ -451,38 +443,6 @@ onBeforeRouteLeave((to, from, next) => {
 .page-disclaimer i {
   margin-right: 4px;
   color: #d97706;
-}
-
-.header-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 6px;
-  background: #f8fafc;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
-}
-
-@media (min-width: 900px) {
-  .header-user {
-    margin-left: auto;
-  }
-}
-
-.header-user .avatar-login {
-  background: linear-gradient(135deg, #e8a54b, #d48232);
-  color: #fff;
-  font-weight: 600;
-}
-
-.user-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #475569;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .header-actions {
