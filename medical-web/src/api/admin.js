@@ -224,6 +224,54 @@ export function deleteDept(id) {
   })
 }
 
+// ==================== 科室挂号看板 ====================
+
+export function getDeptRegistrationBoard(params) {
+  return request({
+    url: '/admin/dept/registration/board',
+    method: 'get',
+    params
+  })
+}
+
+export function getDeptRegistrationTrend(params) {
+  return request({
+    url: '/admin/dept/registration/trend',
+    method: 'get',
+    params
+  })
+}
+
+export function getDeptRegistrationAlertRules() {
+  return request({
+    url: '/admin/dept/registration/alert-rules',
+    method: 'get'
+  })
+}
+
+export function createDeptRegistrationAlertRule(data) {
+  return request({
+    url: '/admin/dept/registration/alert-rules',
+    method: 'post',
+    data
+  })
+}
+
+export function updateDeptRegistrationAlertRule(id, data) {
+  return request({
+    url: `/admin/dept/registration/alert-rules/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+export function deleteDeptRegistrationAlertRule(id) {
+  return request({
+    url: `/admin/dept/registration/alert-rules/${id}`,
+    method: 'delete'
+  })
+}
+
 // ==================== 排班管理 ====================
 
 export function getScheduleList(params) {

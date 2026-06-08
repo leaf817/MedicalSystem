@@ -15,7 +15,8 @@ export const adminMenuItems = [
     title: '科室管理',
     icon: 'fa-solid fa-building',
     children: [
-      { index: '1-1', label: '科室列表', icon: 'fa-solid fa-list', url: '/admin/dept' }
+      { index: '1-1', label: '科室列表', icon: 'fa-solid fa-list', url: '/admin/dept' },
+      { index: '1-2', label: '科室挂号看板', icon: 'fa-solid fa-chart-column', url: '/admin/dept/registration-board' }
     ]
   },
   {

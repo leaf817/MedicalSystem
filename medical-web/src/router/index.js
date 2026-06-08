@@ -28,6 +28,11 @@ const routes = [
         meta: { title: '科室列表' }
       },
       {
+        path: 'admin/dept/registration-board',
+        component: () => import('@/views/admin/DeptRegistrationBoard.vue'),
+        meta: { title: '科室挂号看板' }
+      },
+      {
         path: 'admin/doctor',
         component: () => import('@/views/admin/StaffList.vue'),
         meta: { title: '医生列表', staffRoleCode: 'DOCTOR' }
